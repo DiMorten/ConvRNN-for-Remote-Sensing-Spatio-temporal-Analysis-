@@ -337,18 +337,32 @@ class Dataset(NetObject):
 		return out
 	def assert_equal(self,val1,val2):
 		return np.equal(val1,val2)
+	def int2one_hot(self,x,class_n):
+		out = np.zeros((x.shape[0], class_n))
+		out[np.arange(x.shape[0]),x] = 1
+		return out
+
 
 
 	def metrics_get(self,data,ignore_bcknd=True,debug=1): #requires batch['prediction'],batch['label']
-		
+		class_n=data['prediction'].shape[-1]
 
 		# ==========================IMGS FLATTEN ==========================================#
 		data['prediction_h'] = self.ims_flatten(data['prediction'])
 		data['prediction_h']=self.probabilities_to_one_hot(data['prediction_h'])
 				
 		data['label_h'] = self.ims_flatten(data['label']) #(self.batch['test']['size']*self.patch_len*self.patch_len,self.class_n
+		
+		data['label_h_int']=data['label_h'].argmax(axis=1)
+		data['prediction_h_int']=data['prediction_h'].argmax(axis=1)
 
+		data['prediction_h_int']=data['prediction_h_int'][data['label_h_int']>0]
+		data['label_h_int']=data['label_h_int'][data['label_h_int']>0]
 
+		data['label_h'] = self.int2one_hot(data['label_h_int'],class_n)
+		data['prediction_h'] = self.int2one_hot(data['prediction_h_int'],class_n)
+		
+		
 		if ignore_bcknd==True:
 			data['prediction_h']=data['prediction_h'][:,1:]
 			data['label_h']=data['label_h'][:,1:]
@@ -845,10 +859,11 @@ class NetModel(NetObject):
 		print(self.graph.summary())
 
 	def build(self):
+		deb.prints(self.t_len)
+		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
+
 		if self.model_type=='DenseNet':
 
-			deb.prints(self.t_len)
-			in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
 
 			#x = keras.layers.Permute((1,2,0,3))(in_im)
 			x = keras.layers.Permute((2,3,1,4))(in_im)
@@ -861,11 +876,9 @@ class NetModel(NetObject):
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_DenseNet':
 			# convlstm then densenet
-			deb.prints(self.t_len)
-			in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
 
 			#x = keras.layers.Permute((2,3,1,4))(in_im)
-			x = ConvLSTM2D(64,3,return_sequences=False,padding="same")(in_im)
+			x = ConvLSTM2D(32,3,return_sequences=False,padding="same")(in_im)
 			
 			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
 			out = DenseNetFCN((self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
@@ -874,9 +887,6 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM':
-			deb.prints(self.t_len)
-			in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
-
 			x = ConvLSTM2D(32,3,return_sequences=False,padding="same")(in_im)
 			out = Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same')(x)
@@ -884,14 +894,41 @@ class NetModel(NetObject):
 			print(self.graph.summary())
 
 		elif self.model_type=='FCN_ConvLSTM':
-			deb.prints(self.t_len)
-			in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
-			x = TimeDistributed(Conv2D(filters, (3, 3), padding='same'))(in_im)
+			x = TimeDistributed(Conv2D(32, (3, 3), padding='same'))(in_im)
 			x = ConvLSTM2D(32,3,return_sequences=False,padding="same")(x)
 			out = Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same')(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		elif self.model_type=='FCN_ConvLSTM2':
+			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
+				strides=(2, 2)))(in_im)
+			e2 = TimeDistributed(Conv2D(32, (3, 3), padding='same',
+				strides=(2, 2)))(e1)
+			e3 = TimeDistributed(Conv2D(48, (3, 3), padding='same',
+				strides=(2, 2)))(e2)
+
+			x = ConvLSTM2D(80,3,return_sequences=False,padding="same")(e3)
+
+
+			d3 = Conv2DTranspose(48, (3, 3), strides=(
+				2, 2), padding='same')(x)
+			#d2 = keras.layers.concatenate([d3, e2[:,-1,:,:,:]], axis=3)
+
+			d2 = Conv2DTranspose(32, (3, 3), strides=(
+				2, 2), padding='same')(d3)
+			#d1 = keras.layers.concatenate([d2, e1[:,-1,:,:,:]], axis=3)
+			
+			d1 = Conv2DTranspose(16, (3, 3), strides=(
+				2, 2), padding='same')(d2)
+#			out = keras.layers.concatenate([d1, in_im[:,-1,:,:,:]], axis=3)
+
+			out = Conv2D(self.class_n, (1, 1), activation='softmax',
+						 padding='same')(d1)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+
+
 
 
 
@@ -1161,21 +1198,26 @@ class NetModel(NetObject):
 
 			
 			#==========================TEST LOOP================================================#
-			data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
-			self.batch_test_stats=True
+			if self.early_stop['signal']==True:
+				self.graph.load_weights('weights_best.h5')
+			test_loop_each_epoch=False
+			if test_loop_each_epoch==True or self.early_stop['signal']==True:
+				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
+				self.batch_test_stats=True
 
-			for batch_id in range(0, self.batch['test']['n']):
-				idx0 = batch_id*self.batch['test']['size']
-				idx1 = (batch_id+1)*self.batch['test']['size']
+				for batch_id in range(0, self.batch['test']['n']):
+					idx0 = batch_id*self.batch['test']['size']
+					idx1 = (batch_id+1)*self.batch['test']['size']
 
-				batch['test']['in'] = data.patches['test']['in'][idx0:idx1]
-				batch['test']['label'] = data.patches['test']['label'][idx0:idx1]
+					batch['test']['in'] = data.patches['test']['in'][idx0:idx1]
+					batch['test']['label'] = data.patches['test']['label'][idx0:idx1]
 
-				if self.batch_test_stats:
-					self.metrics['test']['loss'] += self.graph.test_on_batch(
-						batch['test']['in'], batch['test']['label'])		# Accumulated epoch
+					if self.batch_test_stats:
+						self.metrics['test']['loss'] += self.graph.test_on_batch(
+							batch['test']['in'], batch['test']['label'])		# Accumulated epoch
 
-				data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
+					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
+
 
 			#====================METRICS GET================================================#
 			deb.prints(data.patches['test']['label'].shape)		
@@ -1189,10 +1231,12 @@ class NetModel(NetObject):
 			metrics=data.metrics_get(data.patches['test'],debug=1)
 			
 			if self.early_stop['best_updated']==True:
-				self.early_stop['best_predictions']=data.patches['test']['prediction']
+				if test_loop_each_epoch==True:
+					self.early_stop['best_predictions']=data.patches['test']['prediction']
 				self.graph.save_weights('weights_best.h5')
 			print(self.early_stop['signal'])
 			if self.early_stop["signal"]==True:
+				self.early_stop['best_predictions']=data.patches['test']['prediction']
 				print("EARLY STOP EPOCH",epoch,metrics)
 				np.save("prediction.npy",self.early_stop['best_predictions'])
 				np.save("labels.npy",data.patches['test']['label'])

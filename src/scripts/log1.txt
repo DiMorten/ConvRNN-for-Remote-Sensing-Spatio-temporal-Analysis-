@@ -1,2 +1,2 @@
-Uploading file ../campo_verde_ConvLSTM_eyesight.png
-File uploaded - see your image at https://i.imgur.com/Rw9YYA2.png
+Uploading file ../campo_verde_ConvLSTM_DenseNet_eyesight.png
+File uploaded - see your image at https://i.imgur.com/X1NPdEy.png
