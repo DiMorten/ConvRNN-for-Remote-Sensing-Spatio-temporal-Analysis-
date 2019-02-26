@@ -1162,7 +1162,7 @@ class NetModel(NetObject):
 		self.batch['train']['n'] = data.patches['train']['in'].shape[0] // self.batch['train']['size']
 		self.batch['test']['n'] = data.patches['test']['in'].shape[0] // self.batch['test']['size']
 
-		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
+		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 		deb.prints(data.patches['test']['label'].shape)
 		deb.prints(self.batch['test']['n'])
 		
@@ -1206,7 +1206,7 @@ class NetModel(NetObject):
 
 			#================== VAL LOOP=====================#
 			if self.val_set:
-				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'])
+				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
 				deb.prints(data.patches['val']['label'].shape)
 				self.metrics['val']['loss'] = self.graph.test_on_batch(
 						data.patches['val']['in'], data.patches['val']['label'])
@@ -1247,9 +1247,9 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			test_loop_each_epoch=True
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
-				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
+				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=True
 
 				for batch_id in range(0, self.batch['test']['n']):
@@ -1401,7 +1401,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=False
+	balancing=True
 	if balancing==True:
 
 		
@@ -1425,9 +1425,14 @@ if __name__ == '__main__':
 #		return label_int	
 
 	def label_bcknd_from_0_to_last(label,class_n):	
+		print("Changing bcknd from 0 to last...")
+		deb.prints(np.unique(label.argmax(axis=4),return_counts=True))
+
 		out=np.zeros_like(label)
 		valid_class_ids=[i for i in range(1,class_n+1)]
 		out=label[:,:,:,:,valid_class_ids+[0]]
+		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
+
 		return out
 
 
