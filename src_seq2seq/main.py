@@ -326,7 +326,7 @@ class Dataset(NetObject):
 		data['label_h'] = self.int2one_hot(data['label_h_int'],class_n)
 		data['prediction_h'] = self.int2one_hot(data['prediction_h_int'],class_n)
 		
-		
+		ignore_bcknd=False
 		if ignore_bcknd==True:
 			data['prediction_h']=data['prediction_h'][:,1:]
 			data['label_h']=data['label_h'][:,1:]
@@ -372,7 +372,7 @@ class Dataset(NetObject):
 
 		
 		#=====================IMG RECONSTRUCT============================================#
-		if ignore_bcknd!=True:
+		if False==True:
 			data_label_reconstructed=self.flattened_to_im(data['label_h'],data['label'].shape)
 			data_prediction_reconstructed=self.flattened_to_im(data['prediction_h'],data['label'].shape)
 		
@@ -1363,7 +1363,7 @@ if __name__ == '__main__':
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
-	#val_set_mode='random_v2'
+	#val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 

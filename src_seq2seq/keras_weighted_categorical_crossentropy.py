@@ -48,7 +48,7 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights):
     weights = K.variable(weights)
         
     def loss(y_true, y_pred): # y_true onehot,y_pred onehot softmax
-        y_pred = K.log(y_pred)
+        #y_pred = K.log(y_pred)
         print('shape ypred',K.int_shape(y_pred))
         print('shape ytrue',K.int_shape(y_true))
         
@@ -70,10 +70,10 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights):
         y_true = tf.stack(unpacked[:-1], axis=-1) # pick y_true samples that are not bcknd
         print('shape ytrue',K.int_shape(y_true))
 
-        cross_entropy = -K.sum(y_true * y_pred, axis=1)
-        cross_entropy_mean = K.mean(cross_entropy)
+        cross_entropy = -K.sum(y_true * K.log(y_pred), axis=1)
+        loss = K.mean(cross_entropy)
 
-        return cross_entropy_mean
+        return loss
     
     return loss
 # 
