@@ -299,13 +299,28 @@ class Dataset(NetObject):
 		out[np.arange(x.shape[0]),x] = 1
 		return out
 
-
+	def label_bcknd_from_last_eliminate(self,label):
+		out=np.zeros_like(label)
+		label_shape=label.shape
+		label=np.reshape(label,(label.shape[0],-1))
+		out=label[label!=label_shape[-1]-1,:] # label whose value is the last (bcknd)
+		out=np.reshape(out,((out.shape[0],)+label_shape[1:]))
+		return out
 
 	def metrics_get(self,data,ignore_bcknd=True,debug=2): #requires batch['prediction'],batch['label']
 		class_n=data['prediction'].shape[-1]
-		data['label_copy']=data['label'][:,:,:,:,:-1] # Don't take bcknd into account
+		#print("label unque at start of metrics_get",
+		#	np.unique(data['label'].argmax(axis=4),return_counts=True))
+		
+
+		#data['label'][data['label'][:,],:,:,:,:]
+		#data['label_copy']=data['label_copy'][:,:,:,:,:-1] # Eliminate bcknd dimension after having eliminated bcknd samples
+		
+		#print("label_copy unque at start of metrics_get",
+	#		np.unique(data['label_copy'].argmax(axis=4),return_counts=True))
 		deb.prints(data['prediction'].shape,debug,2)
-		deb.prints(data['label_copy'].shape,debug,2)
+		deb.prints(data['label'].shape,debug,2)
+		#deb.prints(data['label_copy'].shape,debug,2)
 
 		# ==========================IMGS FLATTEN ==========================================#
 		data['prediction_h'] = self.ims_flatten(data['prediction'])
@@ -314,18 +329,21 @@ class Dataset(NetObject):
 		data['prediction_h']=self.probabilities_to_one_hot(data['prediction_h'])
 		deb.prints(data['prediction_h'].shape,debug,2)
 				
-		data['label_h'] = self.ims_flatten(data['label_copy']) #(self.batch['test']['size']*self.patch_len*self.patch_len,self.class_n
-		deb.prints(data['label_copy'].shape,debug,2)
+		data['label_h'] = self.ims_flatten(data['label']) #(self.batch['test']['size']*self.patch_len*self.patch_len,self.class_n
+		deb.prints(data['label'].shape,debug,2)
 		
 		data['label_h_int']=data['label_h'].argmax(axis=1)
 		data['prediction_h_int']=data['prediction_h'].argmax(axis=1)
 
-		data['prediction_h_int']=data['prediction_h_int'][data['label_h_int']>0]
-		data['label_h_int']=data['label_h_int'][data['label_h_int']>0]
+		data['prediction_h_int']=data['prediction_h_int'][data['label_h_int']!=class_n]
+		data['label_h_int']=data['label_h_int'][data['label_h_int']!=class_n]
 
 		data['label_h'] = self.int2one_hot(data['label_h_int'],class_n)
 		data['prediction_h'] = self.int2one_hot(data['prediction_h_int'],class_n)
-		
+		print("After passing to int then to onehot")
+		deb.prints(data['label_h'].shape,debug,2)
+		deb.prints(data['prediction_h'].shape,debug,2)
+				
 		ignore_bcknd=False
 		if ignore_bcknd==True:
 			data['prediction_h']=data['prediction_h'][:,1:]
@@ -1418,11 +1436,11 @@ if __name__ == '__main__':
 	# Label background from 0 to last. 
 	deb.prints(data.patches['train']['label'].shape)
 	# ===
-#	def label_bcknd_from_0_to_last(label_one_hot,class_n):		
-#		label_int=label_one_hot.argmax(axis=4)
-#		label_int[label_int==0]=class_n# This number counts the bcknd. So if 3 classes+bcknd=4, class_n=4
-#		label_int-=1
-#		return label_int	
+	def label_bcknd_from_0_to_last(label_one_hot,class_n):		
+		label_int=label_one_hot.argmax(axis=4)
+		label_int[label_int==0]=class_n# This number counts the bcknd. So if 3 classes+bcknd=4, class_n=4
+		label_int-=1
+		return label_int	
 
 	def label_bcknd_from_0_to_last(label,class_n):	
 		print("Changing bcknd from 0 to last...")
