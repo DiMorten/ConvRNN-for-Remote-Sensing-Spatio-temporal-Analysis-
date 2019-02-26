@@ -1265,7 +1265,7 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=True
+			test_loop_each_epoch=False
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=True
@@ -1380,8 +1380,8 @@ if __name__ == '__main__':
 	
 	val_set=True
 	#val_set_mode='stratified'
-	val_set_mode='stratified'
-	#val_set_mode='random'
+	#val_set_mode='stratified'
+	val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 
@@ -1419,7 +1419,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
+	balancing=False
 	if balancing==True:
 
 		
@@ -1437,26 +1437,41 @@ if __name__ == '__main__':
 	deb.prints(data.patches['train']['label'].shape)
 	# ===
 	def label_bcknd_from_0_to_last(label_one_hot,class_n):		
-		label_int=label_one_hot.argmax(axis=4)
-		label_int[label_int==0]=class_n# This number counts the bcknd. So if 3 classes+bcknd=4, class_n=4
-		label_int-=1
-		return label_int	
-
-	def label_bcknd_from_0_to_last(label,class_n):	
 		print("Changing bcknd from 0 to last...")
-		deb.prints(np.unique(label.argmax(axis=4),return_counts=True))
+		deb.prints(np.unique(label_one_hot.argmax(axis=4),return_counts=True))
 
-		out=np.zeros_like(label)
-		valid_class_ids=[i for i in range(1,class_n+1)]
-		out=label[:,:,:,:,valid_class_ids+[0]]
+		label_h=np.reshape(label_one_hot,(-1,label_one_hot.shape[-1]))
+		print("label_h",label_h.shape)
+		label_int=label_h.argmax(axis=1)
+		label_int[label_int==0]=class_n+1# This number counts the bcknd. So if 3 classes+bcknd=4, class_n=4
+		label_int-=1
+
+		out = np.zeros((label_int.shape[0], class_n+1))
+		out[np.arange(label_int.shape[0]),label_int]=1
+		deb.prints(out.shape)
+		out=np.reshape(out,(label_one_hot.shape))
+
 		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
 
-		return out
+		return out	
+
+	# def label_bcknd_from_0_to_last(label,class_n):	
+	# 	print("Changing bcknd from 0 to last...")
+	# 	deb.prints(np.unique(label.argmax(axis=4),return_counts=True))
+
+	# 	out=np.zeros_like(label)
+	# 	valid_class_ids=[i for i in range(1,class_n+1)]
+	# 	out=label[:,:,:,:,valid_class_ids+[0]]
+	# 	deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
+
+	# 	return out
 
 
-
+	deb.prints(data.patches['train']['label'][560,:,15,15,:])
 	data.patches['train']['label']=label_bcknd_from_0_to_last(
 		data.patches['train']['label'],model.class_n)
+	deb.prints(data.patches['train']['label'][560,:,15,15,:])
+
 	data.patches['test']['label']=label_bcknd_from_0_to_last(
 		data.patches['test']['label'],model.class_n)
 	data.patches['val']['label']=label_bcknd_from_0_to_last(

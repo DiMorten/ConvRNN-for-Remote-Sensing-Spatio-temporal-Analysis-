@@ -60,7 +60,7 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights):
         #y_true_classes=K.shape(y_true)
         #print(y_true_classes)
         y_true=tf.cast(y_true,tf.int32)
-        y_true=K.reshape(y_true, (-1, 11+1))
+        y_true=K.reshape(y_true, (-1, K.int_shape(y_pred)[-1]+1))
         print('shape ytrue',K.int_shape(y_true))
 
         y_true = tf.cast(y_true,tf.float32)
@@ -70,7 +70,7 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights):
         y_true = tf.stack(unpacked[:-1], axis=-1) # pick y_true samples that are not bcknd
         print('shape ytrue',K.int_shape(y_true))
 
-        cross_entropy = -K.sum(y_true * K.log(y_pred), axis=1)
+        cross_entropy = -K.sum(y_true * K.log(y_pred) * weights, axis=1)
         loss = K.mean(cross_entropy)
 
         return loss
