@@ -15,17 +15,18 @@ class bcolors:
 	BLUE = '\033[34m'
 
 
-def prints(x,fname="debug"):
+def prints(x,level_actual=1,level_constant=1,fname="debug"):
 	#print("[@"+sys._getframe().f_code.co_name+"]")
-	try:
-		frame = inspect.currentframe().f_back
-		s = inspect.getframeinfo(frame).code_context[0]
-		r = re.search(r"\((.*)\)", s).group(1)
-		if fname is not "debug":
-			r = r[0:-6]
-		print("{}[@{}] {} = {}{}".format(bcolors.OKGREEN,fname,r,x,bcolors.ENDC))
-	except:
-		print("Deb prints error. Value:",x)
+	if level_actual>=level_constant:
+		try:
+			frame = inspect.currentframe().f_back
+			s = inspect.getframeinfo(frame).code_context[0]
+			r = re.search(r"\((.*)\)", s).group(1)
+			if fname is not "debug":
+				r = r[0:-6]
+			print("{}[@{}] {} = {}{}".format(bcolors.OKGREEN,fname,r,x,bcolors.ENDC))
+		except:
+			print("Deb prints error. Value:",x)
 
 
 #x=34

@@ -10,7 +10,7 @@ model='ConvLSTM_DenseNet'
 model='ConvLSTM_seq2seq'
 model='FCN_ConvLSTM_seq2seq_bi'
 model='FCN_ConvLSTM_seq2seq_bi_skip'
-model='ConvLSTM_seq2seq_bi' # russworm bi .
+#model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 cd ..
 python main.py -pl=32 -pstr=32 -psts=32 -path="../../../deep_learning/LSTM-Final-Project/cv_data/" -tl=7 -cn=12 -chn=2 -mdl=$model

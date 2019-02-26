@@ -31,8 +31,65 @@ def weighted_categorical_crossentropy(weights):
         return loss
     
     return loss
+
+def weighted_categorical_crossentropy_ignoring_last_label(weights):
+    """
+    A weighted version of keras.objectives.categorical_crossentropy
+    
+    Variables:
+        weights: numpy array of shape (C,) where C is the number of classes
+    
+    Usage:
+        weights = np.array([0.5,2,10]) # Class one at 0.5, class 2 twice the normal weights, class 3 10x.
+        loss = weighted_categorical_crossentropy(weights)
+        model.compile(loss=loss,optimizer='adam')
+    """
+    
+    weights = K.variable(weights)
+        
+    def loss(y_true, y_pred): # y_true onehot,y_pred onehot softmax
+        y_pred = K.log(y_pred)
+        print('shape ypred',K.int_shape(y_pred))
+        print('shape ytrue',K.int_shape(y_true))
+        
+        y_pred = K.reshape(y_pred, (-1, K.int_shape(y_pred)[-1]))
+        print('shape ypred',K.int_shape(y_pred))
+        y_pred /= K.sum(y_pred, axis=-1, keepdims=True)
+
+#        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1) #replace this for onehot original
+        #y_true_classes=K.shape(y_true)
+        #print(y_true_classes)
+        y_true=tf.cast(y_true,tf.int32)
+        y_true=K.reshape(y_true, (-1, 11+1))
+        print('shape ytrue',K.int_shape(y_true))
+
+        y_true = tf.cast(y_true,tf.float32)
+
+        unpacked = tf.unstack(y_true, axis=-1)
+
+        y_true = tf.stack(unpacked[:-1], axis=-1) # pick y_true samples that are not bcknd
+        print('shape ytrue',K.int_shape(y_true))
+
+        cross_entropy = -K.sum(y_true * y_pred, axis=1)
+        cross_entropy_mean = K.mean(cross_entropy)
+
+        return cross_entropy_mean
+    
+    return loss
 # 
 
+def softmax_sparse_crossentropy_ignoring_last_label(y_true, y_pred):
+    y_pred = K.reshape(y_pred, (-1, K.int_shape(y_pred)[-1]))
+    log_softmax = tf.nn.log_softmax(y_pred)
+
+    y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1)
+    unpacked = tf.unstack(y_true, axis=-1)
+    y_true = tf.stack(unpacked[:-1], axis=-1)
+
+    cross_entropy = -K.sum(y_true * log_softmax, axis=1)
+    cross_entropy_mean = K.mean(cross_entropy)
+
+    return cross_entropy_mean
 
 def sparse_accuracy_ignoring_last_label(y_true, y_pred):
     #y_pred = K.argmax(y_pred,axis=3)
