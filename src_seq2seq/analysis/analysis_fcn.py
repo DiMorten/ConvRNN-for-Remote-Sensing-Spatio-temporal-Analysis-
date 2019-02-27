@@ -58,7 +58,14 @@ path='/home/lvc/Jorg/igarss/fcn_transfer_learning_for_RS/results/normy3_check/se
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/densenet/'
 prediction_path=path+'prediction.npy'
 
-#prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
+prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
+
+# =========seq2seq
+
+
+path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq/cv/'
+prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_160convlstm_jokeillusion.npy'
+
 
 
 predictions=np.load(prediction_path)
