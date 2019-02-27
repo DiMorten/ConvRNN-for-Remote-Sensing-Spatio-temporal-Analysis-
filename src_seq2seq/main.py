@@ -1192,9 +1192,9 @@ class NetModel(NetObject):
 		#==============================START TRAIN/TEST LOOP============================#
 		for epoch in range(self.epochs):
 
-			idxs=np.random.permutation(data.patches['train']['in'].shape[0])
-			data.patches['train']['in']=data.patches['train']['in'][idxs]
-			data.patches['train']['label']=data.patches['train']['label'][idxs]
+			#idxs=np.random.permutation(data.patches['train']['in'].shape[0])
+			#data.patches['train']['in']=data.patches['train']['in'][idxs]
+			#data.patches['train']['label']=data.patches['train']['label'][idxs]
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
 			self.metrics['test']['loss'] = np.zeros((1, 2))
@@ -1230,7 +1230,7 @@ class NetModel(NetObject):
 						data.patches['val']['in'], data.patches['val']['label'])
 				data.patches['val']['prediction']=self.graph.predict(data.patches['val']['in'])
 
-
+				deb.prints(np.average(data.patches['val']['prediction']))
 				# Get val metrics
 
 				metrics_val=data.metrics_get(data.patches['val'],debug=2)
@@ -1247,19 +1247,19 @@ class NetModel(NetObject):
 				metrics_val['per_class_acc'][np.isnan(metrics_val['per_class_acc'])]=-1
 				print(metrics_val['per_class_acc'])
 				
-				if epoch % 5 == 0:
-					print("Writing val...")
-					#print(txt['val']['metrics'])
-					for i in range(len(txt['val']['metrics'])):
-						data.metrics_write_to_txt(txt['val']['metrics'][i],np.squeeze(txt['val']['loss'][i]),
-							txt['val']['epoch'][i],path=self.report['val']['history_path'])
-					txt['val']['metrics']=[]
-					txt['val']['loss']=[]
-					txt['val']['epoch']=[]
-				else:
-					txt['val']['metrics'].append(metrics_val)
-					txt['val']['loss'].append(self.metrics['val']['loss'])
-					txt['val']['epoch'].append(epoch)
+				# if epoch % 5 == 0:
+				# 	print("Writing val...")
+				# 	#print(txt['val']['metrics'])
+				# 	for i in range(len(txt['val']['metrics'])):
+				# 		data.metrics_write_to_txt(txt['val']['metrics'][i],np.squeeze(txt['val']['loss'][i]),
+				# 			txt['val']['epoch'][i],path=self.report['val']['history_path'])
+				# 	txt['val']['metrics']=[]
+				# 	txt['val']['loss']=[]
+				# 	txt['val']['epoch']=[]
+				# else:
+				# 	txt['val']['metrics'].append(metrics_val)
+				# 	txt['val']['loss'].append(self.metrics['val']['loss'])
+				# 	txt['val']['epoch'].append(epoch)
 
 			
 			#==========================TEST LOOP================================================#
