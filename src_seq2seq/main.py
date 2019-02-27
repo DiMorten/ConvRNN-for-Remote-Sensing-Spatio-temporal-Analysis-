@@ -1380,8 +1380,8 @@ if __name__ == '__main__':
 	
 	val_set=True
 	#val_set_mode='stratified'
-	#val_set_mode='stratified'
-	val_set_mode='random'
+	val_set_mode='stratified'
+	#val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 
@@ -1419,7 +1419,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=False
+	balancing=True
 	if balancing==True:
 
 		

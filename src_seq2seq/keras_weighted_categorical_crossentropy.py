@@ -59,11 +59,11 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights):
 #        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1) #replace this for onehot original
         #y_true_classes=K.shape(y_true)
         #print(y_true_classes)
-        y_true=tf.cast(y_true,tf.int32)
+        y_true=tf.cast(y_true,tf.float32)
         y_true=K.reshape(y_true, (-1, K.int_shape(y_pred)[-1]+1))
         print('shape ytrue',K.int_shape(y_true))
 
-        y_true = tf.cast(y_true,tf.float32)
+        #y_true = tf.cast(y_true,tf.float32)
 
         unpacked = tf.unstack(y_true, axis=-1)
 
