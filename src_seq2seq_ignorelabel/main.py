@@ -28,7 +28,7 @@ from densnet_timedistributed import DenseNetFCNTimeDistributed
 
 from metrics import fmeasure,categorical_accuracy
 import deb
-from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label
+from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label
 from keras.models import load_model
 from keras.layers import ConvLSTM2D, ConvGRU2D
 from keras.utils.vis_utils import plot_model
@@ -299,27 +299,52 @@ class Dataset(NetObject):
 		out[np.arange(x.shape[0]),x] = 1
 		return out
 
+	def label_bcknd_from_last_eliminate(self,label):
+		out=np.zeros_like(label)
+		label_shape=label.shape
+		label=np.reshape(label,(label.shape[0],-1))
+		out=label[label!=label_shape[-1]-1,:] # label whose value is the last (bcknd)
+		out=np.reshape(out,((out.shape[0],)+label_shape[1:]))
+		return out
 
-
-	def metrics_get(self,data,ignore_bcknd=True,debug=1): #requires batch['prediction'],batch['label']
+	def metrics_get(self,data,ignore_bcknd=True,debug=2): #requires batch['prediction'],batch['label']
 		class_n=data['prediction'].shape[-1]
+		#print("label unque at start of metrics_get",
+		#	np.unique(data['label'].argmax(axis=4),return_counts=True))
+		
+
+		#data['label'][data['label'][:,],:,:,:,:]
+		#data['label_copy']=data['label_copy'][:,:,:,:,:-1] # Eliminate bcknd dimension after having eliminated bcknd samples
+		
+		#print("label_copy unque at start of metrics_get",
+	#		np.unique(data['label_copy'].argmax(axis=4),return_counts=True))
+		deb.prints(data['prediction'].shape,debug,2)
+		deb.prints(data['label'].shape,debug,2)
+		#deb.prints(data['label_copy'].shape,debug,2)
 
 		# ==========================IMGS FLATTEN ==========================================#
 		data['prediction_h'] = self.ims_flatten(data['prediction'])
+		deb.prints(data['prediction_h'].shape,debug,2)
+
 		data['prediction_h']=self.probabilities_to_one_hot(data['prediction_h'])
+		deb.prints(data['prediction_h'].shape,debug,2)
 				
 		data['label_h'] = self.ims_flatten(data['label']) #(self.batch['test']['size']*self.patch_len*self.patch_len,self.class_n
+		deb.prints(data['label'].shape,debug,2)
 		
 		data['label_h_int']=data['label_h'].argmax(axis=1)
 		data['prediction_h_int']=data['prediction_h'].argmax(axis=1)
 
-		data['prediction_h_int']=data['prediction_h_int'][data['label_h_int']>0]
-		data['label_h_int']=data['label_h_int'][data['label_h_int']>0]
+		data['prediction_h_int']=data['prediction_h_int'][data['label_h_int']!=class_n]
+		data['label_h_int']=data['label_h_int'][data['label_h_int']!=class_n]
 
 		data['label_h'] = self.int2one_hot(data['label_h_int'],class_n)
 		data['prediction_h'] = self.int2one_hot(data['prediction_h_int'],class_n)
-		
-		
+		print("After passing to int then to onehot")
+		deb.prints(data['label_h'].shape,debug,2)
+		deb.prints(data['prediction_h'].shape,debug,2)
+				
+		ignore_bcknd=False
 		if ignore_bcknd==True:
 			data['prediction_h']=data['prediction_h'][:,1:]
 			data['label_h']=data['label_h'][:,1:]
@@ -365,7 +390,7 @@ class Dataset(NetObject):
 
 		
 		#=====================IMG RECONSTRUCT============================================#
-		if ignore_bcknd!=True:
+		if False==True:
 			data_label_reconstructed=self.flattened_to_im(data['label_h'],data['label'].shape)
 			data_prediction_reconstructed=self.flattened_to_im(data['prediction_h'],data['label'].shape)
 		
@@ -1022,7 +1047,8 @@ class NetModel(NetObject):
 
 
 	def compile(self, optimizer, loss='binary_crossentropy', metrics=['accuracy',metrics.categorical_accuracy],loss_weights=None):
-		loss_weighted=weighted_categorical_crossentropy(loss_weights)
+		#loss_weighted=weighted_categorical_crossentropy(loss_weights)
+		loss_weighted=weighted_categorical_crossentropy_ignoring_last_label(loss_weights)
 		#sparse_accuracy_ignoring_last_label()
 		self.graph.compile(loss=loss_weighted, optimizer=optimizer, metrics=metrics)
 		#self.graph.compile(loss=sparse_accuracy_ignoring_last_label, optimizer=optimizer, metrics=metrics)
@@ -1046,6 +1072,7 @@ class NetModel(NetObject):
 		deb.prints(self.loss_weights)
 
 		self.loss_weights[1:]=1
+		self.loss_weights=self.loss_weights[1:]
 		deb.prints(self.loss_weights.shape)
 		
 	def test(self,data):
@@ -1153,7 +1180,7 @@ class NetModel(NetObject):
 		self.batch['train']['n'] = data.patches['train']['in'].shape[0] // self.batch['train']['size']
 		self.batch['test']['n'] = data.patches['test']['in'].shape[0] // self.batch['test']['size']
 
-		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
+		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 		deb.prints(data.patches['test']['label'].shape)
 		deb.prints(self.batch['test']['n'])
 		
@@ -1165,9 +1192,9 @@ class NetModel(NetObject):
 		#==============================START TRAIN/TEST LOOP============================#
 		for epoch in range(self.epochs):
 
-			idxs=np.random.permutation(data.patches['train']['in'].shape[0])
-			data.patches['train']['in']=data.patches['train']['in'][idxs]
-			data.patches['train']['label']=data.patches['train']['label'][idxs]
+			#idxs=np.random.permutation(data.patches['train']['in'].shape[0])
+			#data.patches['train']['in']=data.patches['train']['in'][idxs]
+			#data.patches['train']['label']=data.patches['train']['label'][idxs]
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
 			self.metrics['test']['loss'] = np.zeros((1, 2))
@@ -1197,15 +1224,16 @@ class NetModel(NetObject):
 
 			#================== VAL LOOP=====================#
 			if self.val_set:
-				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'])
+				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
+				deb.prints(data.patches['val']['label'].shape)
 				self.metrics['val']['loss'] = self.graph.test_on_batch(
 						data.patches['val']['in'], data.patches['val']['label'])
 				data.patches['val']['prediction']=self.graph.predict(data.patches['val']['in'])
 
-
+				deb.prints(np.average(data.patches['val']['prediction']))
 				# Get val metrics
 
-				metrics_val=data.metrics_get(data.patches['val'],debug=0)
+				metrics_val=data.metrics_get(data.patches['val'],debug=2)
 
 				self.early_stop_check(metrics_val,epoch)
 				#if epoch==1000 or epoch==700 or epoch==500 or epoch==1200:
@@ -1219,19 +1247,19 @@ class NetModel(NetObject):
 				metrics_val['per_class_acc'][np.isnan(metrics_val['per_class_acc'])]=-1
 				print(metrics_val['per_class_acc'])
 				
-				if epoch % 5 == 0:
-					print("Writing val...")
-					#print(txt['val']['metrics'])
-					for i in range(len(txt['val']['metrics'])):
-						data.metrics_write_to_txt(txt['val']['metrics'][i],np.squeeze(txt['val']['loss'][i]),
-							txt['val']['epoch'][i],path=self.report['val']['history_path'])
-					txt['val']['metrics']=[]
-					txt['val']['loss']=[]
-					txt['val']['epoch']=[]
-				else:
-					txt['val']['metrics'].append(metrics_val)
-					txt['val']['loss'].append(self.metrics['val']['loss'])
-					txt['val']['epoch'].append(epoch)
+				# if epoch % 5 == 0:
+				# 	print("Writing val...")
+				# 	#print(txt['val']['metrics'])
+				# 	for i in range(len(txt['val']['metrics'])):
+				# 		data.metrics_write_to_txt(txt['val']['metrics'][i],np.squeeze(txt['val']['loss'][i]),
+				# 			txt['val']['epoch'][i],path=self.report['val']['history_path'])
+				# 	txt['val']['metrics']=[]
+				# 	txt['val']['loss']=[]
+				# 	txt['val']['epoch']=[]
+				# else:
+				# 	txt['val']['metrics'].append(metrics_val)
+				# 	txt['val']['loss'].append(self.metrics['val']['loss'])
+				# 	txt['val']['epoch'].append(epoch)
 
 			
 			#==========================TEST LOOP================================================#
@@ -1239,7 +1267,7 @@ class NetModel(NetObject):
 				self.graph.load_weights('weights_best.h5')
 			test_loop_each_epoch=False
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
-				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
+				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=True
 
 				for batch_id in range(0, self.batch['test']['n']):
@@ -1353,7 +1381,7 @@ if __name__ == '__main__':
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
-	
+	#val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 
@@ -1370,6 +1398,8 @@ if __name__ == '__main__':
 	data.label_unique=test_label_unique.copy()
 	
 
+
+
 	adam = Adam(lr=0.0001, beta_1=0.9)
 	adam = Adagrad(0.01)
 	model = NetModel(epochs=args.epochs, patch_len=args.patch_len,
@@ -1377,10 +1407,11 @@ if __name__ == '__main__':
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
 					 patience=args.patience,t_len=args.t_len,class_n=args.class_n,path=args.path,
 					 val_set=val_set,model_type=args.model_type)
-	model.class_n=data.class_n
+	model.class_n=data.class_n-1 # Model is designed without background class
+	deb.prints(data.class_n)
 	model.build()
-
-
+	model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
+	deb.prints(data.patches['train']['label'].shape)
 	model.loss_weights_estimate(data)
 	
 	# === SELECT VALIDATION SET FROM TRAIN SET
@@ -1388,53 +1419,66 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	
+	balancing=True
+	if balancing==True:
 
-	
-	# If patch balancing
-	
-	if data.dataset=='seq1' or data.dataset=='seq2':
-		#data.semantic_balance(500) #Changed from 1000
-		data.semantic_balance(500) #More for seq2seq
 		
-	else:
-		data.semantic_balance(300)
+		# If patch balancing
+		
+		if data.dataset=='seq1' or data.dataset=='seq2':
+			#data.semantic_balance(500) #Changed from 1000
+			data.semantic_balance(500) #More for seq2seq
+			
+		else:
+			data.semantic_balance(300)
+
+	model.class_n-=1
+	# Label background from 0 to last. 
+	deb.prints(data.patches['train']['label'].shape)
 	# ===
+	def label_bcknd_from_0_to_last(label_one_hot,class_n):		
+		print("Changing bcknd from 0 to last...")
+		deb.prints(np.unique(label_one_hot.argmax(axis=4),return_counts=True))
 
-	#model.loss_weights=np.array([0.10259888, 0.2107262 , 0.1949083 , 0.20119307, 0.08057474,
-	#   0.20999881]
-	#model.loss_weights=np.array([0,0.04274219, 0.12199843, 0.11601452, 0.12202774, 0.12183601,                                      
-	#   0.1099085 , 0.11723573, 0.00854844, 0.12208636, 0.11760209]).astype(np.float64)
-	#model.loss_weights=np.array([0,1,1,1,1,1,1,1,1,1,1,1]).astype(np.float64)/11
-	#model.loss_weights=np.array([0.        , 0.06051054, 0.13370499, 0.13283712, 0.13405423,
-	#   0.        , 0.13397788, 0.11706449, 0.12805041, 0.03190986,
-	#   0.        , 0.12789048]).astype(np.float64)
-	#model.loss_weights=np.array([0,1.39506639e+00, 2.60304567e+02, 1.03202335e+02, 1.93963056e+04,0,0,
-	 #  6.00161586e+00, 1.66971628e+01, 1.00000000e+00, 0,1.70606546e+01]).astype(np.float64)
-	
-	#model.loss_weights=np.array([0,1.41430758e+00, 2.70356529e+02, 9.87119740e+01, 2.17569417e+05,0,
- #2.43094320e+03, 5.97588208e+00, 1.65553794e+01, 1.00000000e+00,0,
- #1.69903102e+01])
+		label_h=np.reshape(label_one_hot,(-1,label_one_hot.shape[-1]))
+		print("label_h",label_h.shape)
+		label_int=label_h.argmax(axis=1)
+		label_int[label_int==0]=class_n+1# This number counts the bcknd. So if 3 classes+bcknd=4, class_n=4
+		label_int-=1
 
-	#model.loss_weights=np.array([0,1.37713256e+00,2.45637517e+02,6.08387646e+01,2.01024432e+03,0,3.79562360e+02, 6.26613648e+00, 1.70359689e+01, 1.00000000e+00,3.90646218e+03 ,1.59325845e+01])
-	# Estimated with test
-	#model.loss_weights=np.array([0,1.37852055e+00, 2.45986531e+02, 6.10172192e+01, 1.97027386e+03,0,3.71352450e+02 ,6.26956560e+00, 1.70878077e+01 ,1.00000000e+00,4.62502597e+03, 1.59184248e+01])
-	# Estimated with train
-	# This is an okay fcn
-	###model.loss_weights=np.array([0, 1.42610349e+00  , 7.30082405e+02  , 1.75681165e+01 ,  1.11196404e+03, 0,3.93620317e+02 ,  8.51592741e+00  , 2.28322375e+01 ,  1.00000000e+00,2.34818768e+03  , 2.45846645e+01])
-	#####model.loss_weights=np.array([0,1,1,1,1,0,1,1,1,1,1,1])
-	#======end cv seq1
-	##model.loss_weights=np.ones(12)
-	##model.loss_weights[0]=0
-	##model.loss_weights/=11
+		out = np.zeros((label_int.shape[0], class_n+1))
+		out[np.arange(label_int.shape[0]),label_int]=1
+		deb.prints(out.shape)
+		out=np.reshape(out,(label_one_hot.shape))
 
-	#=========== cv se12
+		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
 
-	#####model.loss_weights=np.array([0,2.87029782e+02 ,1.15257798e+02,0,0,0 ,5.51515771e+01 ,1.45716824e+01, 3.90684535e+01 ,1.00000000e+00 ,4.01800573e+03 ,4.20670477e+01])
-	#model.loss_weights=np.array([0,])
+		return out	
+
+	# def label_bcknd_from_0_to_last(label,class_n):	
+	# 	print("Changing bcknd from 0 to last...")
+	# 	deb.prints(np.unique(label.argmax(axis=4),return_counts=True))
+
+	# 	out=np.zeros_like(label)
+	# 	valid_class_ids=[i for i in range(1,class_n+1)]
+	# 	out=label[:,:,:,:,valid_class_ids+[0]]
+	# 	deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
+
+	# 	return out
+
+
+	deb.prints(data.patches['train']['label'][560,:,15,15,:])
+	data.patches['train']['label']=label_bcknd_from_0_to_last(
+		data.patches['train']['label'],model.class_n)
+	deb.prints(data.patches['train']['label'][560,:,15,15,:])
+
+	data.patches['test']['label']=label_bcknd_from_0_to_last(
+		data.patches['test']['label'],model.class_n)
+	data.patches['val']['label']=label_bcknd_from_0_to_last(
+		data.patches['val']['label'],model.class_n)
+		
+	deb.prints(data.patches['val']['label'].shape)
 	#=========== Hannover
-
-	#model.loss_weights=np.array([0,3.32893347, 2.62162162, 1.06386569 ,1.95959596, 1.    ,     7.92583281,2.20570229, 1.17444351])
 
 	metrics=['accuracy']
 	#metrics=['accuracy',fmeasure,categorical_accuracy]

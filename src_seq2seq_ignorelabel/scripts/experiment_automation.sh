@@ -1,5 +1,5 @@
 
-id="jokeflush"
+id="ignorelabelish"
 rm -f log1.txt
 rm -f log2.txt
 rm -f log3.txt
@@ -13,7 +13,7 @@ model='FCN_ConvLSTM_seq2seq_bi_skip'
 #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 cd ..
-python main.py -pl=32 -pstr=32 -psts=32 -path="../../../deep_learning/LSTM-Final-Project/cv_data/" -tl=14 -cn=12 -chn=2 -mdl=$model
+python main.py -pl=32 -pstr=32 -psts=32 -path="../../../deep_learning/LSTM-Final-Project/cv_data/" -tl=7 -cn=12 -chn=2 -mdl=$model
 echo "campo_verde_${model}_${id}"
 
 # ========= TAKE SCREENSHOT ===============
@@ -29,6 +29,6 @@ echo "${path}"
 
 # =============== MOVE PREDICTIONS TO RESULT FOLDER ======
 results_path='../results/seq2seq/cv/'
-mv prediction.npy "${results_path}prediction_${model}_${id}_${t_len}.npy"
+mv prediction.npy "${results_path}prediction_${model}_${id}.npy"
 cd scripts
 

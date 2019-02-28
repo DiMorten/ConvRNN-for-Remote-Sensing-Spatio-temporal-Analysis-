@@ -31,7 +31,6 @@ import deb
 from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label
 from keras.models import load_model
 from keras.layers import ConvLSTM2D, ConvGRU2D
-from keras.utils.vis_utils import plot_model
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -150,10 +149,54 @@ class Dataset(NetObject):
 		deb.prints(self.patches['train']['label'].shape)
 		self.dataset=None
 		unique=np.unique(self.patches['train']['label'])
-		deb.prints(unique)
-		self.dataset='seq1'
+		if unique.shape[0]==11:
+			self.dataset='seq1'
+		elif unique.shape[0]==10:
+			self.dataset='seq2'
+		else:
+			self.dataset='hanover'
+			self.class_n=9
+		if self.dataset=='seq2':
+			#self.patches['train']['label']=np.where(self.patches['train']['label']==)
+			shape = self.patches['train']['label'].shape
+			self.patches['train']['label']=np.reshape(self.patches['train']['label'],-1)
+			self.patches['train']['label'][self.patches['train']['label']>=6]-=1
+			self.patches['train']['label'][self.patches['train']['label']>=2]-=1
+			self.patches['train']['label']=np.reshape(self.patches['train']['label'],shape)
+			deb.prints(self.patches['train']['label'].shape)
+			
 
-		self.class_n=unique.shape[0] #10 plus background
+
+			shape = self.patches['test']['label'].shape
+			self.patches['test']['label']=np.reshape(self.patches['test']['label'],-1)
+			self.patches['test']['label'][self.patches['test']['label']>=6]-=1
+			
+			self.patches['test']['label'][self.patches['test']['label']>=2]-=1
+			self.patches['test']['label']=np.reshape(self.patches['test']['label'],shape)
+			deb.prints(self.patches['test']['label'].shape)
+			
+
+			self.class_n=10 #9 plus background
+		
+		elif self.dataset=='seq1':
+			#self.patches['train']['label']=np.where(self.patches['train']['label']==)
+			shape = self.patches['train']['label'].shape
+			self.patches['train']['label']=np.reshape(self.patches['train']['label'],-1)
+			self.patches['train']['label'][self.patches['train']['label']>=6]-=1
+			self.patches['train']['label']=np.reshape(self.patches['train']['label'],shape)
+			deb.prints(self.patches['train']['label'].shape)
+			
+
+
+			shape = self.patches['test']['label'].shape
+			self.patches['test']['label']=np.reshape(self.patches['test']['label'],-1)
+			self.patches['test']['label'][self.patches['test']['label']>=6]-=1
+			
+			self.patches['test']['label']=np.reshape(self.patches['test']['label'],shape)
+			deb.prints(self.patches['test']['label'].shape)
+			
+
+			self.class_n=11 #10 plus background
 		print("Switching to one hot")
 		self.patches['train']['label']=self.batch_label_to_one_hot(self.patches['train']['label'])
 		self.patches['test']['label']=self.batch_label_to_one_hot(self.patches['test']['label'])
@@ -169,11 +212,11 @@ class Dataset(NetObject):
 		self.patches['train']['idx']=range(self.patches['train']['n'])
 
 	def batch_label_to_one_hot(self,im):
-		im_one_hot=np.zeros((im.shape[0],im.shape[1],im.shape[2],im.shape[3],self.class_n))
+		im_one_hot=np.zeros((im.shape[0],im.shape[1],im.shape[2],self.class_n))
 		print(im_one_hot.shape)
 		print(im.shape)
 		for clss in range(0,self.class_n):
-			im_one_hot[:,:,:,:,clss][im[:,:,:,:]==clss]=1
+			im_one_hot[:,:,:,clss][im[:,:,:]==clss]=1
 		return im_one_hot
 
 	def folder_load(self,folder_path):
@@ -479,7 +522,7 @@ class Dataset(NetObject):
 		out=cv2.cvtColor(out.astype(np.uint8),cv2.COLOR_RGB2BGR)
 		return out
 	def val_set_get(self,mode='stratified',validation_split=0.2):
-		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=4),return_counts=True)
+		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=3),return_counts=True)
 		deb.prints(clss_train_count)
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
 		
@@ -498,7 +541,7 @@ class Dataset(NetObject):
 				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
 				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
 		
-				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=4),return_counts=True)
+				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=3),return_counts=True)
 				
 				if not np.array_equal(clss_train_unique,clss_val_unique):
 					deb.prints(clss_train_unique)
@@ -549,14 +592,14 @@ class Dataset(NetObject):
 		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
 		#deb.prints(data.patches['train']['in'].shape)
 		#deb.prints(data.patches['train']['label'].shape)
-	def semantic_balance(self,samples_per_class=500): # samples mean sequence of patches. Keep
+	def semantic_balance(self,samples_per_class=500):
 		print("data.semantic_balance")
 		
 		# Count test
 		patch_count=np.zeros(self.class_n)
 
 		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=4),clss).sum(axis=(1,2,3)))
+			patch_count[clss]=np.count_nonzero(np.isin(self.patches['test']['label'].argmax(axis=3),clss).sum(axis=(1,2)))
 		deb.prints(patch_count.shape)
 		print("Test",patch_count)
 		
@@ -564,7 +607,7 @@ class Dataset(NetObject):
 		patch_count=np.zeros(self.class_n)
 
 		for clss in range(self.class_n):
-			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=4),clss).sum(axis=(1,2,3)))
+			patch_count[clss]=np.count_nonzero(np.isin(self.patches['train']['label'].argmax(axis=3),clss).sum(axis=(1,2)))
 		deb.prints(patch_count.shape)
 		print("Train",patch_count)
 		
@@ -575,7 +618,7 @@ class Dataset(NetObject):
 
 		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
 
-		label_int=self.patches['train']['label'].argmax(axis=4)
+		label_int=self.patches['train']['label'].argmax(axis=3)
 		labels_flat=np.reshape(label_int,(label_int.shape[0],np.prod(label_int.shape[1:])))
 		k=0
 		for clss in range(1,self.class_n):
@@ -614,23 +657,23 @@ class Dataset(NetObject):
 						
 						if cont_transf == 0:
 							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,1,(2,3))
+							augmented_label_temp = np.rot90(augmented_label_temp,1,(1,2))
 						
 						elif cont_transf == 1:
 							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,2,(2,3))
+							augmented_label_temp = np.rot90(augmented_label_temp,2,(1,2))
 
 						elif cont_transf == 2:
 							augmented_data_temp = np.flip(augmented_data_temp,2)
-							augmented_label_temp = np.flip(augmented_label_temp,2)
+							augmented_label_temp = np.flip(augmented_label_temp,1)
 							
 						elif cont_transf == 3:
 							augmented_data_temp = np.flip(augmented_data_temp,3)
-							augmented_label_temp = np.flip(augmented_label_temp,3)
+							augmented_label_temp = np.flip(augmented_label_temp,2)
 						
 						elif cont_transf == 4:
 							augmented_data_temp = np.rot90(augmented_data_temp,3,(2,3))
-							augmented_label_temp = np.rot90(augmented_label_temp,3,(2,3))
+							augmented_label_temp = np.rot90(augmented_label_temp,3,(1,2))
 							
 						elif cont_transf == 5:
 							augmented_data_temp = augmented_data_temp
@@ -899,77 +942,10 @@ class NetModel(NetObject):
 							activation='softmax', batchsize=32,input_tensor=x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		elif self.model_type=='ConvLSTM_seq2seq':
-			x = ConvLSTM2D(32,3,return_sequences=True,padding="same")(in_im)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-						 padding='same'))(x)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(10,3,return_sequences=True,
-				padding="same"))(in_im)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-						 padding='same'))(x)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		elif self.model_type=='FCN_ConvLSTM_seq2seq_bi':
-			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
-				strides=(2, 2)))(in_im)
-			e2 = TimeDistributed(Conv2D(32, (3, 3), padding='same',
-				strides=(2, 2)))(e1)
-			e3 = TimeDistributed(Conv2D(48, (3, 3), padding='same',
-				strides=(2, 2)))(e2)
-
-			x = Bidirectional(ConvLSTM2D(80,3,return_sequences=True,
-				padding="same"),merge_mode='concat')(e3)
 
 
-			d3 = TimeDistributed(Conv2DTranspose(48, (3, 3), strides=(
-				2, 2), padding='same'))(x)
-			#d2 = keras.layers.concatenate([d3, e2[:,-1,:,:,:]], axis=3)
 
-			d2 = TimeDistributed(Conv2DTranspose(32, (3, 3), strides=(
-				2, 2), padding='same'))(d3)
-			#d1 = keras.layers.concatenate([d2, e1[:,-1,:,:,:]], axis=3)
-			
-			d1 = TimeDistributed(Conv2DTranspose(16, (3, 3), strides=(
-				2, 2), padding='same'))(d2)
-#			out = keras.layers.concatenate([d1, in_im[:,-1,:,:,:]], axis=3)
-
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-						 padding='same'))(d1)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		elif self.model_type=='FCN_ConvLSTM_seq2seq_bi_skip':
-			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
-				strides=(2, 2)))(in_im)
-			e2 = TimeDistributed(Conv2D(32, (3, 3), padding='same',
-				strides=(2, 2)))(e1)
-			e3 = TimeDistributed(Conv2D(48, (3, 3), padding='same',
-				strides=(2, 2)))(e2)
-
-			x = Bidirectional(ConvLSTM2D(80,3,return_sequences=True,
-				padding="same"),merge_mode='concat')(e3)
-
-
-			d3 = TimeDistributed(Conv2DTranspose(48, (3, 3), strides=(
-				2, 2), padding='same'))(x)
-			d3 = keras.layers.concatenate([d3, e2], axis=4)
-
-			d2 = TimeDistributed(Conv2DTranspose(32, (3, 3), strides=(
-				2, 2), padding='same'))(d3)
-			d2 = keras.layers.concatenate([d2, e1], axis=4)
-			
-			d1 = TimeDistributed(Conv2DTranspose(16, (3, 3), strides=(
-				2, 2), padding='same'))(d2)
-			d1 = keras.layers.concatenate([d1, in_im], axis=4)
-
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-						 padding='same'))(d1)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		#plot_model(self.graph, to_file='diagram_'+self.model_type+'.png', 
-		#	show_shapes=True, show_layer_names=True)
+		
 	# def build(self):
 	# Densenet then convlstm. Doesnt fit
 	# 	deb.prints(self.t_len)
@@ -1028,7 +1004,7 @@ class NetModel(NetObject):
 		#self.graph.compile(loss=sparse_accuracy_ignoring_last_label, optimizer=optimizer, metrics=metrics)
 		#self.graph.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=metrics)
 	def loss_weights_estimate(self,data):
-		unique,count=np.unique(data.patches['train']['label'].argmax(axis=4),return_counts=True)
+		unique,count=np.unique(data.patches['train']['label'].argmax(axis=3),return_counts=True)
 		unique=unique[1:] # No bcknd
 		count=count[1:].astype(np.float32)
 		weights_from_unique=np.max(count)/count
@@ -1139,13 +1115,13 @@ class NetModel(NetObject):
 
 
 		if self.val_set:
-			count,unique=np.unique(data.patches['val']['label'].argmax(axis=4),return_counts=True)
+			count,unique=np.unique(data.patches['val']['label'].argmax(axis=3),return_counts=True)
 			print("Val label count,unique",count,unique)
 
-		count,unique=np.unique(data.patches['train']['label'].argmax(axis=4),return_counts=True)
+		count,unique=np.unique(data.patches['train']['label'].argmax(axis=3),return_counts=True)
 		print("Train count,unique",count,unique)
 		
-		count,unique=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
+		count,unique=np.unique(data.patches['test']['label'].argmax(axis=3),return_counts=True)
 		print("Test count,unique",count,unique)
 		
 		#==================== ESTIMATE BATCH NUMBER===============================#
@@ -1361,13 +1337,10 @@ if __name__ == '__main__':
 	deb.prints(data.patches['train']['label'].shape)
 	deb.prints(data.patches['test']['label'].shape)
 	
-	test_label_unique,test_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
-	deb.prints(test_label_unique)
-	deb.prints(test_label_count)
-	train_label_unique,train_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
-	deb.prints(train_label_unique)
-	deb.prints(train_label_count)
-	data.label_unique=test_label_unique.copy()
+	unique,count=np.unique(data.patches['test']['label'].argmax(axis=3),return_counts=True)
+	deb.prints(unique)
+	deb.prints(count)
+	data.label_unique=unique.copy()
 	
 
 	adam = Adam(lr=0.0001, beta_1=0.9)
@@ -1384,7 +1357,6 @@ if __name__ == '__main__':
 	model.loss_weights_estimate(data)
 	
 	# === SELECT VALIDATION SET FROM TRAIN SET
-	val_set = True # fix this
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
@@ -1394,9 +1366,7 @@ if __name__ == '__main__':
 	# If patch balancing
 	
 	if data.dataset=='seq1' or data.dataset=='seq2':
-		#data.semantic_balance(500) #Changed from 1000
-		data.semantic_balance(500) #More for seq2seq
-		
+		data.semantic_balance(500) #Changed from 1000
 	else:
 		data.semantic_balance(300)
 	# ===
