@@ -1227,7 +1227,7 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=True
+			test_loop_each_epoch=False
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:-1])
 				self.batch_test_stats=True
@@ -1343,7 +1343,7 @@ if __name__ == '__main__':
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
-	val_set_mode='random'
+	#val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 
