@@ -58,6 +58,12 @@ path='/home/lvc/Jorg/igarss/fcn_transfer_learning_for_RS/results/normy3_check/se
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/densenet/'
 prediction_path=path+'prediction.npy'
 
+
+# ==========
+
+path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq/cv/'
+prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_160convlstm_jokeillusion.npy'
+
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
 
@@ -77,11 +83,23 @@ print(label_test.shape)
 
 print(predictions.shape)
 
-predictions=predictions.argmax(axis=3)
-predictions=np.reshape(predictions,-1)
+
+
+predictions=predictions.argmax(axis=4)
 #if mode=='best':
-label_test=label_test.argmax(axis=3)
+label_test=label_test.argmax(axis=4)
+
+last_timestamp=True
+if last_timestamp==True:
+	predictions=predictions[:,-1,:,:]
+	label_test=label_test[:,-1,:,:]
+
+
+predictions=np.reshape(predictions,-1)
 label_test=np.reshape(label_test,-1)
+
+
+
 predictions=predictions[label_test>0]
 
 label_test=label_test[label_test>0]

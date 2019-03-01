@@ -58,6 +58,14 @@ path='/home/lvc/Jorg/igarss/fcn_transfer_learning_for_RS/results/normy3_check/se
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/densenet/'
 prediction_path=path+'prediction.npy'
 
+
+
+# ========== Densenet
+
+
+path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/'
+prediction_path=path+'prediction_DenseNet_musicresistance.npy'
+
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
 
