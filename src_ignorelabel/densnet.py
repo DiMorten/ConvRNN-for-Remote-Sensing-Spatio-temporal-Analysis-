@@ -440,7 +440,7 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
                                                   return_concat_list=True, grow_nb_filters=False)
 
     if include_top:
-        x = Conv2D(nb_classes, (1, 1), activation='softmax', padding='same', kernel_regularizer=l2(weight_decay),
+        x = Conv2D(nb_classes, (1, 1), activation=None, padding='same', kernel_regularizer=l2(weight_decay),
                           use_bias=False)(x)
     return x
 

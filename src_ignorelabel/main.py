@@ -1161,7 +1161,7 @@ class NetModel(NetObject):
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
-			deb.prints(np.expand_dims(data.patches['train']['label'].argmax(axis=3),axis=2).shape)
+			deb.prints(np.expand_dims(data.patches['train']['label'].argmax(axis=3),axis=3).shape)
 			#=============================TRAIN LOOP=========================================#
 			for batch_id in range(0, self.batch['train']['n']):
 				
@@ -1172,7 +1172,7 @@ class NetModel(NetObject):
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'], np.expand_dims(batch['train']['label'].argmax(axis=3),axis=2))		# Accumulated epoch
+					batch['train']['in'], np.expand_dims(batch['train']['label'].argmax(axis=3),axis=3))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
@@ -1186,10 +1186,10 @@ class NetModel(NetObject):
 			if self.val_set:
 				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:-1])
 				deb.prints(data.patches['val']['label'].shape)
-				deb.prints(np.expand_dims(data.patches['val']['label'].argmax(axis=3),axis=2).shape)
+				deb.prints(np.expand_dims(data.patches['val']['label'].argmax(axis=3),axis=3).shape)
 				self.metrics['val']['loss'] = self.graph.test_on_batch(
 						data.patches['val']['in'], 
-						np.expand_dims(data.patches['val']['label'].argmax(axis=3),axis=2))
+						np.expand_dims(data.patches['val']['label'].argmax(axis=3),axis=3))
 				data.patches['val']['prediction']=self.graph.predict(data.patches['val']['in'])
 
 
@@ -1227,7 +1227,7 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			test_loop_each_epoch=True
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:-1])
 				self.batch_test_stats=True
@@ -1241,7 +1241,7 @@ class NetModel(NetObject):
 
 					if self.batch_test_stats:
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
-							batch['test']['in'], np.expand_dims(batch['test']['label'].argmax(axis=3),axis=2))		# Accumulated epoch
+							batch['test']['in'], np.expand_dims(batch['test']['label'].argmax(axis=3),axis=3))		# Accumulated epoch
 
 					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
 
@@ -1343,7 +1343,7 @@ if __name__ == '__main__':
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
-	#val_set_mode='random'
+	val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 
