@@ -66,7 +66,7 @@ prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_160convlstm_jokeil
 
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
-prediction_path=path+'prediction_DenseNetTimeDistributed_jokeflush_.npy'
+#prediction_path=path+'prediction_DenseNetTimeDistributed_jokeflush_.npy'
 predictions=np.load(prediction_path)
 label_test=np.load(path+'labels.npy')
 
