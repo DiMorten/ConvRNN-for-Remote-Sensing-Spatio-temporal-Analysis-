@@ -263,8 +263,11 @@ def __dense_block(x, nb_layers, nb_filter, growth_rate, bottleneck=False, dropou
     x_list = [x]
 
     for i in range(nb_layers):
-       
-
+        #print("i,nb_layers-1",i,nb_layers-1,convrnn_layer, int(i)==int(nb_layers-1))
+        if int(i)==0 and convrnn_layer==True:
+            convrnn_layer=True
+        else:
+            convrnn_layer=False
         x = __conv_block(x, growth_rate, bottleneck, dropout_rate, weight_decay,
             convrnn_layer=convrnn_layer)
         x_list.append(x)

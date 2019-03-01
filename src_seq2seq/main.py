@@ -145,6 +145,9 @@ class Dataset(NetObject):
 		self.patches['train']['in'],self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'])
 		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
 		self.patches['test']['in'],self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'])
+		self.patches['train']['in']=self.patches['train']['in'].astype(np.float32)
+		self.patches['test']['in']=self.patches['test']['in'].astype(np.float32)
+		
 		deb.prints(self.patches['train']['in'].shape)
 		deb.prints(self.patches['test']['in'].shape)
 		deb.prints(self.patches['train']['label'].shape)
@@ -687,9 +690,11 @@ class NetModel(NetObject):
 			print("Initializing Model instance")
 		self.val_set=val_set
 		self.metrics = {'train': {}, 'test': {}, 'val':{}}
-		self.batch = {'train': {}, 'test': {}}
+		self.batch = {'train': {}, 'test': {}, 'val':{}}
 		self.batch['train']['size'] = batch_size_train
 		self.batch['test']['size'] = batch_size_test
+		self.batch['val']['size'] = batch_size_test
+		
 		self.eval_mode = eval_mode
 		self.epochs = epochs
 		self.early_stop={'best':0,
@@ -1161,9 +1166,10 @@ class NetModel(NetObject):
 		print("Test count,unique",count,unique)
 		
 		#==================== ESTIMATE BATCH NUMBER===============================#
-		batch = {'train': {}, 'test': {}}
+		batch = {'train': {}, 'test': {}, 'val': {}}
 		self.batch['train']['n'] = data.patches['train']['in'].shape[0] // self.batch['train']['size']
 		self.batch['test']['n'] = data.patches['test']['in'].shape[0] // self.batch['test']['size']
+		self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
 
 		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'])
 		deb.prints(data.patches['test']['label'].shape)
@@ -1183,6 +1189,8 @@ class NetModel(NetObject):
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
 			self.metrics['test']['loss'] = np.zeros((1, 2))
+			self.metrics['val']['loss'] = np.zeros((1, 2))
+
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
@@ -1209,10 +1217,23 @@ class NetModel(NetObject):
 
 			#================== VAL LOOP=====================#
 			if self.val_set:
+
 				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'])
-				self.metrics['val']['loss'] = self.graph.test_on_batch(
-						data.patches['val']['in'], data.patches['val']['label'])
-				data.patches['val']['prediction']=self.graph.predict(data.patches['val']['in'])
+				self.batch_test_stats=True
+
+				for batch_id in range(0, self.batch['val']['n']):
+					idx0 = batch_id*self.batch['val']['size']
+					idx1 = (batch_id+1)*self.batch['val']['size']
+
+					batch['val']['in'] = data.patches['val']['in'][idx0:idx1]
+					batch['val']['label'] = data.patches['val']['label'][idx0:idx1]
+
+					if self.batch_test_stats:
+						self.metrics['val']['loss'] += self.graph.test_on_batch(
+							batch['val']['in'], batch['val']['label'])		# Accumulated epoch
+
+					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(batch['val']['in'],batch_size=self.batch['val']['size'])
+				self.metrics['val']['loss'] /= self.batch['val']['n']
 
 
 				# Get val metrics
@@ -1365,7 +1386,7 @@ if __name__ == '__main__':
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
-	val_set_mode='random'
+	#val_set_mode='random'
 	
 
 	deb.prints(data.patches['train']['label'].shape)
