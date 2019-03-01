@@ -198,7 +198,7 @@ def __conv_block(ip, nb_filter, bottleneck=False, dropout_rate=None, weight_deca
                                beta_regularizer=l2(weight_decay))(x)
         x = Activation('relu')(x)
 
-    if convrnn_layer==False:
+    if True:
         x = TimeDistributed(Conv2D(nb_filter, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
                           kernel_regularizer=l2(weight_decay)))(x)
     else:
@@ -408,6 +408,10 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
 
     # The last dense_block does not have a transition_down_block
     # return the concatenated feature maps without the concatenation of the input
+
+    x = Bidirectional(ConvLSTM2D(60, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+                          kernel_regularizer=l2(weight_decay),
+                          return_sequences=True))(x)
     _, nb_filter, concat_list = __dense_block(x, bottleneck_nb_layers, nb_filter, growth_rate,
                                               dropout_rate=dropout_rate, weight_decay=weight_decay,
                                               return_concat_list=True,

@@ -322,7 +322,7 @@ class Dataset(NetObject):
 		data['label_h'] = self.int2one_hot(data['label_h_int'],class_n)
 		data['prediction_h'] = self.int2one_hot(data['prediction_h_int'],class_n)
 		
-		
+		ignore_bcknd=False
 		if ignore_bcknd==True:
 			data['prediction_h']=data['prediction_h'][:,1:]
 			data['label_h']=data['label_h'][:,1:]

@@ -66,7 +66,7 @@ prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_160convlstm_jokeil
 
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
-
+prediction_path=path+'prediction_DenseNetTimeDistributed_jokeflush_.npy'
 predictions=np.load(prediction_path)
 label_test=np.load(path+'labels.npy')
 
@@ -89,7 +89,7 @@ predictions=predictions.argmax(axis=4)
 #if mode=='best':
 label_test=label_test.argmax(axis=4)
 
-last_timestamp=True
+last_timestamp=False
 if last_timestamp==True:
 	predictions=predictions[:,-1,:,:]
 	label_test=label_test[:,-1,:,:]
