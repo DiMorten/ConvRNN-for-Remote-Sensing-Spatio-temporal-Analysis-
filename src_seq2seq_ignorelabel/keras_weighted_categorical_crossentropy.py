@@ -47,31 +47,17 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights):
     
     weights = K.variable(weights)
         
-    def loss(y_true, y_pred): # y_true onehot,y_pred onehot softmax
-        #y_pred = K.log(y_pred)
-        print('shape ypred',K.int_shape(y_pred))
-        print('shape ytrue',K.int_shape(y_true))
-        
+    def loss(y_true, y_pred):
         y_pred = K.reshape(y_pred, (-1, K.int_shape(y_pred)[-1]))
-        print('shape ypred',K.int_shape(y_pred))
-        ##y_pred /= K.sum(y_pred, axis=-1, keepdims=True)
-        # clip to prevent NaN's and Inf's
-        y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
-#        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1) #replace this for onehot original
-        #y_true_classes=K.shape(y_true)
-        #print(y_true_classes)
-        y_true=tf.cast(y_true,tf.float32)
-        y_true=K.reshape(y_true, (-1, K.int_shape(y_pred)[-1]+1))
-        print('shape ytrue',K.int_shape(y_true))
+        log_softmax = tf.nn.log_softmax(y_pred)
+        #log_softmax = tf.log(y_pred)
+        #log_softmax = K.log(y_pred)
 
-        #y_true = tf.cast(y_true,tf.float32)
-
+        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1)
         unpacked = tf.unstack(y_true, axis=-1)
+        y_true = tf.stack(unpacked[:-1], axis=-1)
 
-        y_true = tf.stack(unpacked[:-1], axis=-1) # pick y_true samples that are not bcknd
-        print('shape ytrue',K.int_shape(y_true))
-
-        cross_entropy = -K.sum(y_true * K.log(y_pred) * weights, axis=1)
+        cross_entropy = -K.sum(y_true * log_softmax * weights , axis=1)
         loss = K.mean(cross_entropy)
 
         return loss

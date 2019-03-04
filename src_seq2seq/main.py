@@ -368,14 +368,6 @@ class Dataset(NetObject):
 
 		
 		#=====================IMG RECONSTRUCT============================================#
-		if ignore_bcknd!=True:
-			data_label_reconstructed=self.flattened_to_im(data['label_h'],data['label'].shape)
-			data_prediction_reconstructed=self.flattened_to_im(data['prediction_h'],data['label'].shape)
-		
-			deb.prints(data_label_reconstructed.shape)
-			np.testing.assert_almost_equal(data['label'],data_label_reconstructed)
-			print("Is label reconstructed equal to original",np.array_equal(data['label'],data_label_reconstructed))
-			print("Is prediction reconstructed equal to original",np.array_equal(data['prediction'].argmax(axis=3),data_prediction_reconstructed.argmax(axis=3)))
 
 		if self.debug>=2: print(metrics['per_class_acc'])
 
@@ -911,7 +903,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(10,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(40,3,return_sequences=True,
 				padding="same"))(in_im)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same'))(x)

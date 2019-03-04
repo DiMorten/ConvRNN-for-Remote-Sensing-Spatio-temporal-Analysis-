@@ -712,9 +712,11 @@ class NetModel(NetObject):
 			print("Initializing Model instance")
 		self.val_set=val_set
 		self.metrics = {'train': {}, 'test': {}, 'val':{}}
-		self.batch = {'train': {}, 'test': {}}
+		self.batch = {'train': {}, 'test': {}, 'val':{}}
 		self.batch['train']['size'] = batch_size_train
 		self.batch['test']['size'] = batch_size_test
+		self.batch['val']['size'] = batch_size_test
+		
 		self.eval_mode = eval_mode
 		self.epochs = epochs
 		self.early_stop={'best':0,
@@ -931,10 +933,13 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(10,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#						 padding='same'))(x)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(x)
+						 
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='FCN_ConvLSTM_seq2seq_bi':
@@ -1129,6 +1134,7 @@ class NetModel(NetObject):
 		# Computing the number of batches
 		data.patches['train']['batch_n'] = data.patches['train']['in'].shape[0]//self.batch['train']['size']
 		data.patches['test']['batch_n'] = data.patches['test']['in'].shape[0]//self.batch['test']['size']
+		data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
 
 		deb.prints(data.patches['train']['batch_n'])
 
@@ -1176,9 +1182,10 @@ class NetModel(NetObject):
 		print("Test count,unique",count,unique)
 		
 		#==================== ESTIMATE BATCH NUMBER===============================#
-		batch = {'train': {}, 'test': {}}
+		batch = {'train': {}, 'test': {}, 'val':{}}
 		self.batch['train']['n'] = data.patches['train']['in'].shape[0] // self.batch['train']['size']
 		self.batch['test']['n'] = data.patches['test']['in'].shape[0] // self.batch['test']['size']
+		self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
 
 		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 		deb.prints(data.patches['test']['label'].shape)
@@ -1192,12 +1199,13 @@ class NetModel(NetObject):
 		#==============================START TRAIN/TEST LOOP============================#
 		for epoch in range(self.epochs):
 
-			#idxs=np.random.permutation(data.patches['train']['in'].shape[0])
-			#data.patches['train']['in']=data.patches['train']['in'][idxs]
-			#data.patches['train']['label']=data.patches['train']['label'][idxs]
+			idxs=np.random.permutation(data.patches['train']['in'].shape[0])
+			data.patches['train']['in']=data.patches['train']['in'][idxs]
+			data.patches['train']['label']=data.patches['train']['label'][idxs]
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
 			self.metrics['test']['loss'] = np.zeros((1, 2))
+			self.metrics['val']['loss'] = np.zeros((1, 2))
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
@@ -1212,7 +1220,7 @@ class NetModel(NetObject):
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'], batch['train']['label'])		# Accumulated epoch
+					batch['train']['in'], np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
@@ -1225,13 +1233,21 @@ class NetModel(NetObject):
 			#================== VAL LOOP=====================#
 			if self.val_set:
 				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
-				deb.prints(data.patches['val']['label'].shape)
-				self.metrics['val']['loss'] = self.graph.test_on_batch(
-						data.patches['val']['in'], data.patches['val']['label'])
-				data.patches['val']['prediction']=self.graph.predict(data.patches['val']['in'])
+				self.batch_test_stats=True
 
-				deb.prints(np.average(data.patches['val']['prediction']))
-				# Get val metrics
+				for batch_id in range(0, self.batch['val']['n']):
+					idx0 = batch_id*self.batch['val']['size']
+					idx1 = (batch_id+1)*self.batch['val']['size']
+
+					batch['val']['in'] = data.patches['val']['in'][idx0:idx1]
+					batch['val']['label'] = data.patches['val']['label'][idx0:idx1]
+
+					if self.batch_test_stats:
+						self.metrics['val']['loss'] += self.graph.test_on_batch(
+							batch['val']['in'], np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
+
+					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(batch['val']['in'],batch_size=self.batch['val']['size'])
+				self.metrics['val']['loss'] /= self.batch['val']['n']
 
 				metrics_val=data.metrics_get(data.patches['val'],debug=2)
 
@@ -1279,7 +1295,7 @@ class NetModel(NetObject):
 
 					if self.batch_test_stats:
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
-							batch['test']['in'], batch['test']['label'])		# Accumulated epoch
+							batch['test']['in'], np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
 
 					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
 

@@ -56,7 +56,9 @@ path='/home/lvc/Jorg/igarss/fcn_transfer_learning_for_RS/results/normy3_check/se
 # ======== ConvRNN
 
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/densenet/'
-prediction_path=path+'prediction.npy'
+
+path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/ignorelabel/cv/'
+prediction_path=path+'prediction_DenseNet_whydyoucall.npy'
 
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
@@ -82,9 +84,12 @@ predictions=np.reshape(predictions,-1)
 #if mode=='best':
 label_test=label_test.argmax(axis=3)
 label_test=np.reshape(label_test,-1)
-predictions=predictions[label_test>0]
 
-label_test=label_test[label_test>0]
+class_n=np.max(label_test)
+print("class_n",class_n)
+predictions=predictions[label_test<class_n]
+
+label_test=label_test[label_test<class_n]
 
 print("Predictions",predictions.shape)
 print("Label_test",label_test.shape)
