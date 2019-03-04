@@ -64,9 +64,32 @@ prediction_path=path+'prediction.npy'
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq/cv/'
 prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_160convlstm_jokeillusion.npy'
 
+
+# ========= ANALYSIS CAMPO VERDE
+# === bi?
+prediction_path=path+'prediction_ConvLSTM_seq2seq_blockgoer.npy'
+prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_whydyoucall_128x2.npy'
+
+# === N. Filters
+
+#prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_blockgoer_40x2.npy'
+prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_blockgoer_60x2.npy'
+
+
+# ==== FCN COnvLSTM bi skip
+prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_blockgoer.npy'
+
+# ==== Densenet ConvLSTM in smalle rdimension
+prediction_path=path+'prediction_DenseNetTimeDistributed_blockgoer.npy'
+
+
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
 #prediction_path=path+'prediction_DenseNetTimeDistributed_jokeflush_.npy'
+
+#prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_blockgoer_40x2.npy'
+#prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_whydyoucall_128x2.npy'
+
 predictions=np.load(prediction_path)
 label_test=np.load(path+'labels.npy')
 

@@ -65,6 +65,7 @@ prediction_path=path+'prediction.npy'
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/cv/'
 prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_jokeillusion.npy'
 
+prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_whydyoucall.npy'
 
 predictions=np.load(prediction_path)
 label_test=np.load(path+'labels.npy')

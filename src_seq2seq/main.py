@@ -897,13 +897,13 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq':
-			x = ConvLSTM2D(32,3,return_sequences=True,padding="same")(in_im)
+			x = ConvLSTM2D(256,3,return_sequences=True,padding="same")(in_im)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(40,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
 				padding="same"))(in_im)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same'))(x)
@@ -917,7 +917,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(Conv2D(48, (3, 3), padding='same',
 				strides=(2, 2)))(e2)
 
-			x = Bidirectional(ConvLSTM2D(80,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(40,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(e3)
 
 
@@ -945,7 +945,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(Conv2D(48, (3, 3), padding='same',
 				strides=(2, 2)))(e2)
 
-			x = Bidirectional(ConvLSTM2D(80,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(e3)
 
 

@@ -8,9 +8,11 @@ model='ConvLSTM_DenseNet'
 #model='FCN_ConvLSTM2'
 #model='BiConvLSTM_DenseNet'
 model='ConvLSTM_seq2seq'
-model='FCN_ConvLSTM_seq2seq_bi'
-model='FCN_ConvLSTM_seq2seq_bi_skip'
-model='DenseNetTimeDistributed'
+
+#model='FCN_ConvLSTM_seq2seq_bi'
+#model='FCN_ConvLSTM_seq2seq_bi_skip'
+#model='DenseNetTimeDistributed'
+
 #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 
