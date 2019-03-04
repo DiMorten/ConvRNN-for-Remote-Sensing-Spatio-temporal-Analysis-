@@ -998,6 +998,18 @@ class NetModel(NetObject):
 						 padding='same'))(d1)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='DenseNetTimeDistributed':
+
+
+			#x = keras.layers.Permute((1,2,0,3))(in_im)
+			#x = keras.layers.Permute((2,3,1,4))(in_im)
+			
+			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
+							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
+							activation='softmax', batchsize=32,input_tensor=in_im)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		#plot_model(self.graph, to_file='diagram_'+self.model_type+'.png', 
 		#	show_shapes=True, show_layer_names=True)
 	# def build(self):

@@ -71,7 +71,7 @@ predictions=np.load(prediction_path)
 label_test=np.load(path+'labels.npy')
 
 # ================= Estimate the last timestamp
-only_one_timestamp=True
+only_one_timestamp=False
 if only_one_timestamp:
 	label_test=label_test[:,-1,:,:,:]
 	predictions=predictions[:,-1,:,:,:]
@@ -88,65 +88,87 @@ print(label_test.shape)
 
 class_n=predictions.shape[-1]
 
+mode='each_date'
+
+if mode=='each_date':
+	predictions=predictions.argmax(axis=np.ndim(predictions)-1)
+	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
+
+	for t in label_test.shape[1]:
+		predictions_t=predictions[t]
+		label_test_t=label_test[t]
+		
+
+
+	predictions=np.reshape(predictions,(predictions.shape[0]))
+	
+
+elif mode=='global':
 
 
 
-predictions=predictions.argmax(axis=np.ndim(predictions)-1)
-predictions=np.reshape(predictions,-1)
-#if mode=='best':
-label_test=label_test.argmax(axis=np.ndim(label_test)-1)
-label_test=np.reshape(label_test,-1)
-predictions=predictions[label_test<class_n]
+	predictions=predictions.argmax(axis=np.ndim(predictions)-1)
+	predictions=np.reshape(predictions,-1)
+	#if mode=='best':
+	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
+	label_test=np.reshape(label_test,-1)
+	predictions=predictions[label_test<class_n]
 
-label_test=label_test[label_test<class_n]
+	label_test=label_test[label_test<class_n]
 
-print("Predictions",predictions.shape)
-print("Label_test",label_test.shape)
-
-
+	print("Predictions",predictions.shape)
+	print("Label_test",label_test.shape)
 
 
 
-print(np.unique(predictions,return_counts=True))
-print(np.unique(label_test,return_counts=True))
+
+
+	print(np.unique(predictions,return_counts=True))
+	print(np.unique(label_test,return_counts=True))
+
+	metrics=metrics_get(label_test,predictions)
 
 #====================================
 
-print(predictions.shape,predictions.dtype)
-print(label_test.shape,label_test.dtype)
+def metrics_get(label_test,predictions):
+	print(predictions.shape,predictions.dtype)
+	print(label_test.shape,label_test.dtype)
 
 
 
-metrics={}
-metrics['f1_score']=f1_score(label_test,predictions,average='macro')
-metrics['f1_score_weighted']=f1_score(label_test,predictions,average='weighted')
-        
-metrics['overall_acc']=accuracy_score(label_test,predictions)
-confusion_matrix_=confusion_matrix(label_test,predictions)
-metrics['per_class_acc']=(confusion_matrix_.astype('float') / confusion_matrix_.sum(axis=1)[:, np.newaxis]).diagonal()
-print("acc",metrics['per_class_acc'])
+	metrics={}
+	metrics['f1_score']=f1_score(label_test,predictions,average='macro')
+	metrics['f1_score_weighted']=f1_score(label_test,predictions,average='weighted')
+	        
+	metrics['overall_acc']=accuracy_score(label_test,predictions)
+	confusion_matrix_=confusion_matrix(label_test,predictions)
+	metrics['per_class_acc']=(confusion_matrix_.astype('float') / confusion_matrix_.sum(axis=1)[:, np.newaxis]).diagonal()
+	print("acc",metrics['per_class_acc'])
 
-print(confusion_matrix_.sum(axis=1)[:, np.newaxis].diagonal())
-print(confusion_matrix_.diagonal())
-print(np.sum(confusion_matrix_,axis=1))
-acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
-acc=acc[~np.isnan(acc)]
-print("Acc",acc)
-print("AA",np.average(acc))
-print("OA",np.sum(confusion_matrix_.diagonal())/np.sum(confusion_matrix_))
+	print(confusion_matrix_.sum(axis=1)[:, np.newaxis].diagonal())
+	print(confusion_matrix_.diagonal())
+	print(np.sum(confusion_matrix_,axis=1))
+	acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
+	acc=acc[~np.isnan(acc)]
+	print("Acc",acc)
+	print("AA",np.average(acc))
+	print("OA",np.sum(confusion_matrix_.diagonal())/np.sum(confusion_matrix_))
 
 
-metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
+	metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
 
-metrics['recall']=recall_score(label_test,predictions,average=None)
-metrics['precision']=precision_score(label_test,predictions,average=None)
+	metrics['recall']=recall_score(label_test,predictions,average=None)
+	metrics['precision']=precision_score(label_test,predictions,average=None)
 
-print(metrics)
-print(confusion_matrix_)
+	print(metrics)
+	print(confusion_matrix_)
 
-print(metrics['precision'])
-print(metrics['recall'])
+	print(metrics['precision'])
+	print(metrics['recall'])
+	return metrics
 
 
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
+
+

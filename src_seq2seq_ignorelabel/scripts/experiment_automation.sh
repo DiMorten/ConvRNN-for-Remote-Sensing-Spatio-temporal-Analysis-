@@ -1,5 +1,5 @@
 
-id="ignorelabelish"
+id="blockgoer"
 rm -f log1.txt
 rm -f log2.txt
 rm -f log3.txt
@@ -10,6 +10,8 @@ model='ConvLSTM_DenseNet'
 model='ConvLSTM_seq2seq'
 model='FCN_ConvLSTM_seq2seq_bi'
 model='FCN_ConvLSTM_seq2seq_bi_skip'
+
+model='DenseNetTimeDistributed'
 #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 cd ..
@@ -28,7 +30,7 @@ echo "${path}"
 . ifttt_send.sh $path
 
 # =============== MOVE PREDICTIONS TO RESULT FOLDER ======
-results_path='../results/seq2seq/cv/'
+results_path='../results/seq2seq_ignorelabel/cv/'
 mv prediction.npy "${results_path}prediction_${model}_${id}.npy"
 cd scripts
 

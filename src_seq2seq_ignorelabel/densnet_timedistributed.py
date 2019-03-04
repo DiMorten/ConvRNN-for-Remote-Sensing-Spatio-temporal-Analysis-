@@ -23,7 +23,7 @@ from keras.engine.topology import get_source_inputs
 #from keras.applications.imagenet_utils import _obtain_input_shape
 import keras.backend as K
 from keras.layers.convolutional_recurrent import ConvLSTM2D
-from keras.layers import TimeDistributed
+from keras.layers import TimeDistributed, Bidirectional
 #from layers import SubPixelUpscaling
 
 K.set_image_data_format('channels_last')  # TF dimension ordering in this code
@@ -167,7 +167,8 @@ def DenseNetFCNTimeDistributed(input_shape, nb_dense_block=5, growth_rate=16, nb
     return x
 
 
-def __conv_block(ip, nb_filter, bottleneck=False, dropout_rate=None, weight_decay=1E-4):
+def __conv_block(ip, nb_filter, bottleneck=False, dropout_rate=None, weight_decay=1E-4,
+    convrnn_layer=False):
     ''' Apply BatchNorm, Relu, 3x3 Conv2D, optional bottleneck block and dropout
     Args:
         ip: Input keras tensor
@@ -197,15 +198,22 @@ def __conv_block(ip, nb_filter, bottleneck=False, dropout_rate=None, weight_deca
                                beta_regularizer=l2(weight_decay))(x)
         x = Activation('relu')(x)
 
-    x = TimeDistributed(Conv2D(nb_filter, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
-                      kernel_regularizer=l2(weight_decay)))(x)
+    if True:
+        x = TimeDistributed(Conv2D(nb_filter, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+                          kernel_regularizer=l2(weight_decay)))(x)
+    else:
+        print("convlstm")
+        x = Bidirectional(ConvLSTM2D(nb_filter, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+                          kernel_regularizer=l2(weight_decay),
+                          return_sequences=True))(x)        
+
     if dropout_rate:
         x = Dropout(dropout_rate)(x)
 
     return x
 
 
-def __transition_block(ip, nb_filter, compression=1.0, dropout_rate=None, weight_decay=1E-4):
+def __transition_block(ip, nb_filter, compression=1.0, dropout_rate=None, weight_decay=1E-4, convrnn_layer=False):
     ''' Apply BatchNorm, Relu 1x1, Conv2D, optional compression, dropout and Maxpooling2D
     Args:
         ip: keras tensor
@@ -222,8 +230,10 @@ def __transition_block(ip, nb_filter, compression=1.0, dropout_rate=None, weight
     x = BatchNormalization(axis=concat_axis, gamma_regularizer=l2(weight_decay),
                            beta_regularizer=l2(weight_decay))(ip)
     x = Activation('relu')(x)
+#    if convrnn_layer==False:
     x = TimeDistributed(Conv2D(int(nb_filter * compression), (1, 1), kernel_initializer="he_uniform", padding="same", use_bias=False,
                       kernel_regularizer=l2(weight_decay)))(x)
+
     if dropout_rate:
         x = Dropout(dropout_rate)(x)
     x = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(x)
@@ -232,7 +242,8 @@ def __transition_block(ip, nb_filter, compression=1.0, dropout_rate=None, weight
 
 
 def __dense_block(x, nb_layers, nb_filter, growth_rate, bottleneck=False, dropout_rate=None, weight_decay=1E-4,
-                  grow_nb_filters=True, return_concat_list=False):
+                  grow_nb_filters=True, return_concat_list=False,
+                  convrnn_layer=False):
     ''' Build a dense_block where the output of each conv_block is fed to subsequent ones
     Args:
         x: keras tensor
@@ -252,7 +263,13 @@ def __dense_block(x, nb_layers, nb_filter, growth_rate, bottleneck=False, dropou
     x_list = [x]
 
     for i in range(nb_layers):
-        x = __conv_block(x, growth_rate, bottleneck, dropout_rate, weight_decay)
+        #print("i,nb_layers-1",i,nb_layers-1,convrnn_layer, int(i)==int(nb_layers-1))
+        if int(i)==0 and convrnn_layer==True:
+            convrnn_layer=True
+        else:
+            convrnn_layer=False
+        x = __conv_block(x, growth_rate, bottleneck, dropout_rate, weight_decay,
+            convrnn_layer=convrnn_layer)
         x_list.append(x)
 
         x = concatenate([m for m in x_list], axis=concat_axis)
@@ -380,6 +397,10 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
         skip_list.append(x)
 
         # add transition_block
+        if block_idx==nb_dense_block-1:
+            convrnn_layer=True
+        else:
+            convrnn_layer=False
         x = __transition_block(x, nb_filter, compression=compression, dropout_rate=dropout_rate,
                                weight_decay=weight_decay)
 
@@ -387,9 +408,14 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
 
     # The last dense_block does not have a transition_down_block
     # return the concatenated feature maps without the concatenation of the input
+
+    x = Bidirectional(ConvLSTM2D(60, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+                          kernel_regularizer=l2(weight_decay),
+                          return_sequences=True))(x)
     _, nb_filter, concat_list = __dense_block(x, bottleneck_nb_layers, nb_filter, growth_rate,
                                               dropout_rate=dropout_rate, weight_decay=weight_decay,
-                                              return_concat_list=True)
+                                              return_concat_list=True,
+                                              convrnn_layer=True)
 
     skip_list = skip_list[::-1]  # reverse the skip list
 
@@ -436,7 +462,7 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
                                                   return_concat_list=True, grow_nb_filters=False)
 
     if include_top:
-        x = TimeDistributed(Conv2D(nb_classes, (1, 1), activation='softmax', padding='same', kernel_regularizer=l2(weight_decay),
+        x = TimeDistributed(Conv2D(nb_classes, (1, 1), activation=None, padding='same', kernel_regularizer=l2(weight_decay),
                           use_bias=False))(x)
     return x
 
