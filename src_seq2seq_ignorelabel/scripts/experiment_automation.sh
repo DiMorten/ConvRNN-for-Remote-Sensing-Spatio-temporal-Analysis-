@@ -1,17 +1,20 @@
 
-id="blockgoer"
+id=$1
+model=$2
+
+#id="blockgoer"
 rm -f log1.txt
 rm -f log2.txt
 rm -f log3.txt
 #model='FCN_ConvLSTM'
-model='ConvLSTM_DenseNet'
+##model='ConvLSTM_DenseNet'
 #model='FCN_ConvLSTM2'
 #model='BiConvLSTM_DenseNet'
-model='ConvLSTM_seq2seq'
-model='FCN_ConvLSTM_seq2seq_bi'
-model='FCN_ConvLSTM_seq2seq_bi_skip'
+##model='ConvLSTM_seq2seq'
+##model='FCN_ConvLSTM_seq2seq_bi'
+##model='FCN_ConvLSTM_seq2seq_bi_skip'
 
-model='DenseNetTimeDistributed'
+##model='DenseNetTimeDistributed'
 #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 cd ..

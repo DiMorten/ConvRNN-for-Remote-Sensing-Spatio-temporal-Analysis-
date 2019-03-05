@@ -32,6 +32,7 @@ from keras_weighted_categorical_crossentropy import weighted_categorical_crossen
 from keras.models import load_model
 from keras.layers import ConvLSTM2D, ConvGRU2D
 from keras.utils.vis_utils import plot_model
+from keras.regularizers import l2
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -844,8 +845,9 @@ class NetModel(NetObject):
 
 	def build(self):
 		deb.prints(self.t_len)
-		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
-
+		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))		
+		weight_decay=1E-4
+		
 		if self.model_type=='DenseNet':
 
 
@@ -927,9 +929,12 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq':
-			x = ConvLSTM2D(32,3,return_sequences=True,padding="same")(in_im)
+			x = ConvLSTM2D(256,3,return_sequences=True,padding="same")(in_im)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			x = Activation('relu')(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
@@ -937,9 +942,25 @@ class NetModel(NetObject):
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
+
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(x)
-						 
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			x = Activation('relu')(x)						 
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+		elif self.model_type=='ConvLSTM_seq2seq_bi_60x2':
+			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
+				padding="same"))(in_im)
+#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#						 padding='same'))(x)
+
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			x = Activation('relu')(x)						 
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='FCN_ConvLSTM_seq2seq_bi':
