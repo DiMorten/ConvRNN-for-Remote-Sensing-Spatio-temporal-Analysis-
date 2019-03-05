@@ -1,4 +1,4 @@
-
+KERAS_BACKEND=tensorflow
 id='loneish'
 
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' 
