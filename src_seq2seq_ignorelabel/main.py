@@ -999,7 +999,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(Conv2D(48, (3, 3), padding='same',
 				strides=(2, 2)))(e2)
 
-			x = Bidirectional(ConvLSTM2D(80,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
 				padding="same"),merge_mode='concat')(e3)
 
 
@@ -1015,7 +1015,7 @@ class NetModel(NetObject):
 				2, 2), padding='same'))(d2)
 			d1 = keras.layers.concatenate([d1, in_im], axis=4)
 
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(d1)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())

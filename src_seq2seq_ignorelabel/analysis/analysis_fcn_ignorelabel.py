@@ -95,9 +95,11 @@ if mode=='each_date':
 	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
 
 	for t in label_test.shape[1]:
-		predictions_t=predictions[t]
-		label_test_t=label_test[t]
+		predictions_t=predictions[:,t,:,:]
+		label_test_t=label_test[:,t,:,:]
 		
+		predictions_t=np.reshape(predictions_t,-1)
+		label_test_t=np.reshape(label_test_t,-1)
 
 
 	predictions=np.reshape(predictions,(predictions.shape[0]))
