@@ -1,6 +1,23 @@
 
 id=$1
 model=$2
+dataset=$3 # could be cv or lem
+
+if [ "$dataset" == "campo_verde" ]
+then
+	filename="campo_verde"
+	results_path='../results/seq2seq_ignorelabel/cv/'
+	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
+	sequence_len=7
+	class_n=12
+else
+	filename="lm"
+	results_path='../results/seq2seq_ignorelabel/lm/'
+	dataset_path="../../../deep_learning/LSTM-Final-Project/lm_data/"
+	sequence_len=13
+	class_n=15 # 14+bcknd
+fi
+
 
 #id="blockgoer"
 rm -f log1.txt
@@ -18,11 +35,11 @@ rm -f log3.txt
 #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 cd ..
-python main.py -pl=32 -pstr=32 -psts=32 -path="../../../deep_learning/LSTM-Final-Project/cv_data/" -tl=7 -cn=12 -chn=2 -mdl=$model
-echo "campo_verde_${model}_${id}"
+python main.py -pl=32 -pstr=32 -psts=32 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
+echo "${filename}_${model}_${id}"
 
 # ========= TAKE SCREENSHOT ===============
-im_name="campo_verde_${model}_${id}.png"
+im_name="${filename}_${model}_${id}.png"
 wmctrl -a konsole
 shutter -f -o $im_name -e
 
@@ -33,7 +50,7 @@ echo "${path}"
 . ifttt_send.sh $path
 
 # =============== MOVE PREDICTIONS TO RESULT FOLDER ======
-results_path='../results/seq2seq_ignorelabel/cv/'
-mv prediction.npy "${results_path}prediction_${model}_${id}.npy"
+#results_path='../results/seq2seq_ignorelabel/cv/'
+cp prediction.npy "${results_path}prediction_${model}_${id}.npy"
 cd scripts
 
