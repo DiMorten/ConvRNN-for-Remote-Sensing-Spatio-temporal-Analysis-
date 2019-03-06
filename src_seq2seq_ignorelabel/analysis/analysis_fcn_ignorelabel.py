@@ -172,36 +172,40 @@ def experiments_analyze(dataset,experiment_list):
 
 def experiments_plot(metrics,experiment_list):
 
-	t_len=metrics[0]['f1_score'].shape[0]
+	t_len=len(metrics[0]['f1_score'])
+	print("t_len",t_len)
 	indices = range(t_len) # t_len
 	X = np.arange(t_len)
 	exp_id=0
+	width=0.25
+	colors=['b','r','y','c','m']
+	exp_handler=[] # here I save the plot for legend later
+
+	fig, ax = plt.subplots()
 	for experiment in experiment_list:
-		metrics[exp_id]['f1_score']=np.transpose(metrics[exp_id]['f1_score'])
-		metrics[exp_id]['overall_acc']=np.transpose(metrics[exp_id]['overall_acc'])
-		metrics[exp_id]['average_acc']=np.transpose(metrics[exp_id]['average_acc'])
+		print("experiment",experiment)
+		print(exp_id)
+		metrics[exp_id]['f1_score']=np.transpose(np.asarray(metrics[exp_id]['f1_score']))
+		metrics[exp_id]['overall_acc']=np.transpose(np.asarray(metrics[exp_id]['overall_acc']))
+		metrics[exp_id]['average_acc']=np.transpose(np.asarray(metrics[exp_id]['average_acc']))
 
-		plt.bar(X + float(exp_id)*0.05, metrics[exp_id]['f1_score'], 
-			color = 'b', width = 0.05)
+		exp_handler.append(ax.bar(X + float(exp_id)*width/2, 
+			metrics[exp_id]['f1_score'], 
+			color = colors[exp_id], width = width/2))
+
+		
+		exp_id+=1
+	ax.legend(tuple(exp_handler), tuple(experiment_list))
 
 
-
-	plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
-	plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
-	plt.bar(X + 0.50, data[2], color = 'r', width = 0.25)
+	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
+	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
+	#plt.bar(X + 0.50, data[2], color = 'r', width = 0.25)
 
 
 	#plot_metric=[x['f1_score'] for x in metrics]
 	#print(plot_metric)
-	print(experiment_list[0:3])
-	print(metrics[0]['f1_score'])
-	print(np.c_[metrics[0]['f1_score'],
-		metrics[1]['f1_score'],metrics[2]['f1_score']])
-	df = pd.DataFrame(np.c_[metrics[0]['f1_score'],
-		metrics[1]['f1_score'],metrics[2]['f1_score']], 
-		index=experiment_list[0:3])
-	df.plot.bar()
-
+	
 	plt.show()
 
 dataset='cv'
