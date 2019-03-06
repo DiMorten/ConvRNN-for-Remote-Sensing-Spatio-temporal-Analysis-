@@ -1,18 +1,20 @@
  
 import numpy as np
 
-import cv2
-import h5py
-import scipy.io as sio
+#import cv2
+#import h5py
+#import scipy.io as sio
 import numpy as np
 import glob
 import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report,recall_score,precision_score
 from sklearn.externals import joblib
-
+import matplotlib.pyplot as plt
+import pandas as pd
 #====================================
-def labels_predictions_filter_transform(label_test,predictions):
+def labels_predictions_filter_transform(label_test,predictions,class_n,
+		debug=1):
 	predictions=predictions.argmax(axis=np.ndim(predictions)-1)
 	predictions=np.reshape(predictions,-1)
 	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
@@ -20,47 +22,48 @@ def labels_predictions_filter_transform(label_test,predictions):
 	predictions=predictions[label_test<class_n]
 
 	label_test=label_test[label_test<class_n]
-
-	print("Predictions",predictions.shape)
-	print("Label_test",label_test.shape)
+	if debug>0:
+		print("Predictions",predictions.shape)
+		print("Label_test",label_test.shape)
 	return label_test,predictions
-def metrics_get(label_test,predictions,only_basics=False):
-	print(predictions.shape,predictions.dtype)
-	print(label_test.shape,label_test.dtype)
-
-
+def metrics_get(label_test,predictions,only_basics=False,debug=1):
+	if debug>0:
+		print(predictions.shape,predictions.dtype)
+		print(label_test.shape,label_test.dtype)
 
 	metrics={}
 	metrics['f1_score']=f1_score(label_test,predictions,average='macro')
 	metrics['overall_acc']=accuracy_score(label_test,predictions)
 	confusion_matrix_=confusion_matrix(label_test,predictions)
 	metrics['per_class_acc']=(confusion_matrix_.astype('float') / confusion_matrix_.sum(axis=1)[:, np.newaxis]).diagonal()
-	##acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
-	##acc=acc[~np.isnan(acc)]
+	acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
+	acc=acc[~np.isnan(acc)]
 	metrics['average_acc']=np.average(metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])])
-	print("acc",metrics['per_class_acc'])
-	##print("Acc",acc)
-	##print("AA",np.average(acc))
-	##print("OA",np.sum(confusion_matrix_.diagonal())/np.sum(confusion_matrix_))
-	print("AA",metrics['average_acc'])
-	print("OA",metrics['overall_acc'])
+	if debug>0:
+		print("acc",metrics['per_class_acc'])
+		print("Acc",acc)
+		print("AA",np.average(acc))
+		print("OA",np.sum(confusion_matrix_.diagonal())/np.sum(confusion_matrix_))
+		print("AA",metrics['average_acc'])
+		print("OA",metrics['overall_acc'])
 
 	if only_basics==False:
 
 		metrics['f1_score_weighted']=f1_score(label_test,predictions,average='weighted')
 		        
-		print(confusion_matrix_.sum(axis=1)[:, np.newaxis].diagonal())
-		print(confusion_matrix_.diagonal())
-		print(np.sum(confusion_matrix_,axis=1))
 
 		metrics['recall']=recall_score(label_test,predictions,average=None)
 		metrics['precision']=precision_score(label_test,predictions,average=None)
+		if debug>0:
+			print(confusion_matrix_.sum(axis=1)[:, np.newaxis].diagonal())
+			print(confusion_matrix_.diagonal())
+			print(np.sum(confusion_matrix_,axis=1))
 
-		print(metrics)
-		print(confusion_matrix_)
+			print(metrics)
+			print(confusion_matrix_)
 
-		print(metrics['precision'])
-		print(metrics['recall'])
+			print(metrics['precision'])
+			print(metrics['recall'])
 	return metrics
 
 
@@ -114,62 +117,109 @@ prediction_path=path+'prediction.npy'
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
 # =========seq2seq 
+def experiment_analyze(dataset='cv',
+		prediction_filename='prediction_DenseNetTimeDistributed_blockgoer.npy',
+		mode='each_date',debug=1):
+	path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/'+dataset+'/'
 
-path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/cv/'
-prediction_path=path+'prediction_FCN_ConvLSTM_seq2seq_bi_skip_jokeillusion.npy'
+	prediction_path=path+prediction_filename
+	predictions=np.load(prediction_path)
+	label_test=np.load(path+'labels.npy')
+	if debug>0:
+		print(predictions.shape)
+		print(label_test.shape)
+	class_n=predictions.shape[-1]
 
-prediction_path=path+'prediction_ConvLSTM_seq2seq_bi_whydyoucall.npy'
-prediction_path=path+'prediction_DenseNetTimeDistributed_blockgoer.npy'
-predictions=np.load(prediction_path)
-label_test=np.load(path+'labels.npy')
+	if mode=='each_date':
+		metrics_t={'f1_score':[],'overall_acc':[],
+			'average_acc':[]}
+		for t in range(label_test.shape[1]):
+			predictions_t = predictions[:,t,:,:,:]
+			label_test_t = label_test[:,t,:,:,:]
 
-# ================= Estimate the last timestamp
-only_one_timestamp=False
-if only_one_timestamp:
-	label_test=label_test[:,-1,:,:,:]
-	predictions=predictions[:,-1,:,:,:]
-
-
-# ===== Oficial
-
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/hn_data/normy/fcn_8/'
-
-print(predictions.shape)
-
-print(label_test.shape)
-#predictions=np.delete(predictions,range(2000,3000),axis=0)
-
-class_n=predictions.shape[-1]
-
-mode='each_date'
-
-if mode=='each_date':
-	metrics_t={'f1_score':[],'overall_acc':[],
-		'average_acc':[]}
-	for t in range(label_test.shape[1]):
-		predictions_t=predictions[:,t,:,:,:]
-		label_test_t=label_test[:,t,:,:,:]
-
-		label_test_t,predictions_t=labels_predictions_filter_transform(
-			label_test_t,predictions_t)
-		metrics=metrics_get(label_test_t,predictions_t,only_basics=True)	
-		metrics_t['f1_score'].append(metrics['f1_score'])
-		metrics_t['overall_acc'].append(metrics['overall_acc'])
-		metrics_t['average_acc'].append(metrics['average_acc'])
+			label_test_t,predictions_t = labels_predictions_filter_transform(
+				label_test_t, predictions_t, class_n=class_n,
+				debug=debug)
+			metrics = metrics_get(label_test_t, predictions_t,
+				only_basics=True, debug=debug)	
+			metrics_t['f1_score'].append(metrics['f1_score'])
+			metrics_t['overall_acc'].append(metrics['overall_acc'])
+			metrics_t['average_acc'].append(metrics['average_acc'])
 
 		print(metrics_t)
-elif mode=='global':
-	
-	label_test,predictions=labels_predictions_filter_transform(
-		label_test,predictions)
+		return metrics_t
+	elif mode=='global':
+		
+		label_test,predictions=labels_predictions_filter_transform(
+			label_test,predictions)
 
-	print(np.unique(predictions,return_counts=True))
-	print(np.unique(label_test,return_counts=True))
+		print(np.unique(predictions,return_counts=True))
+		print(np.unique(label_test,return_counts=True))
 
-	metrics=metrics_get(label_test,predictions)
+		metrics=metrics_get(label_test,predictions)
+
+		return metrics
+def experiments_analyze(dataset,experiment_list):
+	experiment_metrics=[]
+	for experiment in experiment_list:
+		print("Starting experiment:",experiment)
+		experiment_metrics.append(experiment_analyze(
+			dataset=dataset,
+			prediction_filename=experiment,
+			mode='each_date',debug=0))
+	return experiment_metrics
+
+
+def experiments_plot(metrics,experiment_list):
+
+	t_len=metrics[0]['f1_score'].shape[0]
+	indices = range(t_len) # t_len
+	X = np.arange(t_len)
+	exp_id=0
+	for experiment in experiment_list:
+		metrics[exp_id]['f1_score']=np.transpose(metrics[exp_id]['f1_score'])
+		metrics[exp_id]['overall_acc']=np.transpose(metrics[exp_id]['overall_acc'])
+		metrics[exp_id]['average_acc']=np.transpose(metrics[exp_id]['average_acc'])
+
+		plt.bar(X + float(exp_id)*0.05, metrics[exp_id]['f1_score'], 
+			color = 'b', width = 0.05)
 
 
 
+	plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
+	plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
+	plt.bar(X + 0.50, data[2], color = 'r', width = 0.25)
+
+
+	#plot_metric=[x['f1_score'] for x in metrics]
+	#print(plot_metric)
+	print(experiment_list[0:3])
+	print(metrics[0]['f1_score'])
+	print(np.c_[metrics[0]['f1_score'],
+		metrics[1]['f1_score'],metrics[2]['f1_score']])
+	df = pd.DataFrame(np.c_[metrics[0]['f1_score'],
+		metrics[1]['f1_score'],metrics[2]['f1_score']], 
+		index=experiment_list[0:3])
+	df.plot.bar()
+
+	plt.show()
+
+dataset='cv'
+load_metrics=True
+experiment_list=[
+	'prediction_ConvLSTM_seq2seq_loneish.npy',
+	'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
+	'prediction_ConvLSTM_seq2seq_bi_60x2_loneish.npy',
+	'prediction_FCN_ConvLSTM_seq2seq_bi_skip_loneish.npy',
+	'prediction_DenseNetTimeDistributed_blockgoer.npy']
+
+if load_metrics==False:
+	experiment_metrics=experiments_analyze(dataset,experiment_list)
+	np.save("experiment_metrics.npy",experiment_metrics)
+
+else:
+	experiment_metrics=np.load("experiment_metrics.npy")
+experiments_plot(experiment_metrics,experiment_list)
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
 
