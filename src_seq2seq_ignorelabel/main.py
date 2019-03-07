@@ -929,7 +929,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq':
-			x = ConvLSTM2D(120,3,return_sequences=True,padding="same")(in_im)
+			x = ConvLSTM2D(256,3,return_sequences=True,padding="same")(in_im)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
@@ -938,7 +938,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)

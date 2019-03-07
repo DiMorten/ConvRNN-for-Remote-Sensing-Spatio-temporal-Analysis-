@@ -1,11 +1,11 @@
 KERAS_BACKEND=tensorflow
-id='filtersizefix'
+id='filtersizefix2'
 
 #dataset='campo_verde'
 
-dataset='lm'
+#dataset='lm'
 
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset 
+#. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset 
 
 
 
@@ -13,7 +13,7 @@ dataset='cv'
 
 
 # ==== EXTRACT PATCHES
-. patches_extract.sh $dataset
+#. patches_extract.sh $dataset
 # ===== USE MODEL
 
 #. experiment_automation.sh $id 'DenseNetTimeDistributed' $dataset 

@@ -151,7 +151,7 @@ def experiment_analyze(dataset='cv',
 	elif mode=='global':
 		
 		label_test,predictions=labels_predictions_filter_transform(
-			label_test,predictions)
+			label_test,predictions, class_n=class_n)
 
 		print(np.unique(predictions,return_counts=True))
 		print(np.unique(label_test,return_counts=True))
@@ -159,14 +159,14 @@ def experiment_analyze(dataset='cv',
 		metrics=metrics_get(label_test,predictions)
 
 		return metrics
-def experiments_analyze(dataset,experiment_list):
+def experiments_analyze(dataset,experiment_list,mode='each_date'):
 	experiment_metrics=[]
 	for experiment in experiment_list:
 		print("Starting experiment:",experiment)
 		experiment_metrics.append(experiment_analyze(
 			dataset=dataset,
 			prediction_filename=experiment,
-			mode='each_date',debug=0))
+			mode=mode,debug=0))
 	return experiment_metrics
 
 
@@ -177,11 +177,16 @@ def experiments_plot(metrics,experiment_list):
 	indices = range(t_len) # t_len
 	X = np.arange(t_len)
 	exp_id=0
-	width=0.25
-	colors=['b','r','y','c','m']
+	width=0.5
+	colors=['b','y','c','m','r']
 	exp_handler=[] # here I save the plot for legend later
+	exp_handler2=[] # here I save the plot for legend later
+	exp_handler3=[] # here I save the plot for legend later
 
 	fig, ax = plt.subplots()
+	fig2, ax2 = plt.subplots()
+	fig3, ax3 = plt.subplots()
+
 	for experiment in experiment_list:
 		print("experiment",experiment)
 		print(exp_id)
@@ -193,10 +198,19 @@ def experiments_plot(metrics,experiment_list):
 			metrics[exp_id]['f1_score'], 
 			color = colors[exp_id], width = width/2))
 
+		exp_handler2.append(ax2.bar(X + float(exp_id)*width/2, 
+			metrics[exp_id]['average_acc'], 
+			color = colors[exp_id], width = width/2))
+
+		exp_handler3.append(ax3.bar(X + float(exp_id)*width/2, 
+			metrics[exp_id]['overall_acc'], 
+			color = colors[exp_id], width = width/2))
+
 		
 		exp_id+=1
-	ax.legend(tuple(exp_handler), tuple(experiment_list))
+	#ax.legend(tuple(exp_handler), tuple(experiment_list))
 
+	#ax2.legend(tuple(exp_handler2), tuple(experiment_list))
 
 	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
 	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
@@ -209,8 +223,9 @@ def experiments_plot(metrics,experiment_list):
 	plt.show()
 
 dataset='lm'
-load_metrics=False
-
+load_metrics=True
+mode='each_date'
+#mode='global'
 if dataset=='cv':
 	experiment_list=[
 		'prediction_ConvLSTM_seq2seq_loneish.npy',
@@ -220,19 +235,22 @@ if dataset=='cv':
 		'prediction_DenseNetTimeDistributed_blockgoer.npy']
 elif dataset=='lm':
 	experiment_list=[
-		#'prediction_ConvLSTM_seq2seq_lmish.npy',
+		'prediction_ConvLSTM_seq2seq_filtersizefix.npy',
 		#'prediction_ConvLSTM_seq2seq_bi_lmish.npy',
 		'prediction_ConvLSTM_seq2seq_bi_60x2_lmish.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lmish.npy',
+		#'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lmish.npy',
 		'prediction_DenseNetTimeDistributed_lmish.npy']
 	
 if load_metrics==False:
-	experiment_metrics=experiments_analyze(dataset,experiment_list)
+	experiment_metrics=experiments_analyze(dataset,experiment_list,
+		mode=mode)
 	np.save("experiment_metrics_"+dataset+".npy",experiment_metrics)
 
 else:
 	experiment_metrics=np.load("experiment_metrics_"+dataset+".npy")
-experiments_plot(experiment_metrics,experiment_list)
+
+if mode=='each_date':
+	experiments_plot(experiment_metrics,experiment_list)
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
 

@@ -3,7 +3,7 @@ id=$1
 model=$2
 dataset=$3 # could be cv or lem
 
-if [ "$dataset" == "campo_verde" ]
+if [ "$dataset" == "cv" ]
 then
 	filename="campo_verde"
 	results_path='../results/seq2seq_ignorelabel/cv/'
