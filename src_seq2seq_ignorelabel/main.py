@@ -929,7 +929,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq':
-			x = ConvLSTM2D(256,3,return_sequences=True,padding="same")(in_im)
+			x = ConvLSTM2D(120,3,return_sequences=True,padding="same")(in_im)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 						 padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
@@ -938,7 +938,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -1028,9 +1028,24 @@ class NetModel(NetObject):
 			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
 			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
 							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
-							activation='softmax', batchsize=32,input_tensor=in_im)
+							activation='softmax', batchsize=32,input_tensor=in_im,
+							recurrent_filters=60)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='DenseNetTimeDistributed_128x2':
+
+
+			#x = keras.layers.Permute((1,2,0,3))(in_im)
+			#x = keras.layers.Permute((2,3,1,4))(in_im)
+			
+			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
+							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
+							activation='softmax', batchsize=32,input_tensor=in_im,
+							recurrent_filters=128)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+
 		#plot_model(self.graph, to_file='diagram_'+self.model_type+'.png', 
 		#	show_shapes=True, show_layer_names=True)
 	# def build(self):

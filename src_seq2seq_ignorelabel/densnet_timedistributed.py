@@ -39,7 +39,8 @@ from keras.utils.generic_utils import get_custom_objects
 def DenseNetFCNTimeDistributed(input_shape, nb_dense_block=5, growth_rate=16, nb_layers_per_block=4,
                 reduction=0.0, dropout_rate=0.0, weight_decay=1E-4, init_conv_filters=48,
                 include_top=True, weights=None, input_tensor=None, classes=1, activation='softmax',
-                upsampling_conv=128, upsampling_type='upsampling', batchsize=None):
+                upsampling_conv=128, upsampling_type='upsampling', batchsize=None,
+                recurrent_filters=60):
     """Instantiate the DenseNet FCN architecture.
         Note that when using TensorFlow,
         for best performance you should set
@@ -153,7 +154,8 @@ def DenseNetFCNTimeDistributed(input_shape, nb_dense_block=5, growth_rate=16, nb
     x = __create_fcn_dense_net(classes, img_input, include_top, nb_dense_block,
                                growth_rate, reduction, dropout_rate, weight_decay,
                                nb_layers_per_block, upsampling_conv, upsampling_type,
-                               batchsize, init_conv_filters, input_shape)
+                               batchsize, init_conv_filters, input_shape,
+                               recurrent_filters)
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
@@ -318,7 +320,8 @@ def __transition_up_block(ip, nb_filters, type='upsampling', output_shape=None, 
 def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5, growth_rate=12,
                            reduction=0.0, dropout_rate=None, weight_decay=1E-4,
                            nb_layers_per_block=4, nb_upsampling_conv=128, upsampling_type='upsampling',
-                           batchsize=None, init_conv_filters=48, input_shape=None, activation='softmax'):
+                           batchsize=None, init_conv_filters=48, input_shape=None, activation='softmax',
+                           recurrent_filters=60):
     ''' Build the DenseNet model
     Args:
         nb_classes: number of classes
@@ -409,7 +412,7 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
     # The last dense_block does not have a transition_down_block
     # return the concatenated feature maps without the concatenation of the input
 
-    x = Bidirectional(ConvLSTM2D(60, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+    x = Bidirectional(ConvLSTM2D(recurrent_filters, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
                           kernel_regularizer=l2(weight_decay),
                           return_sequences=True))(x)
     _, nb_filter, concat_list = __dense_block(x, bottleneck_nb_layers, nb_filter, growth_rate,

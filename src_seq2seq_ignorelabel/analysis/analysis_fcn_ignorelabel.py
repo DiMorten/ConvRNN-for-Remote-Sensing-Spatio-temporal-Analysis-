@@ -208,21 +208,30 @@ def experiments_plot(metrics,experiment_list):
 	
 	plt.show()
 
-dataset='cv'
-load_metrics=True
-experiment_list=[
-	'prediction_ConvLSTM_seq2seq_loneish.npy',
-	'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
-	'prediction_ConvLSTM_seq2seq_bi_60x2_loneish.npy',
-	'prediction_FCN_ConvLSTM_seq2seq_bi_skip_loneish.npy',
-	'prediction_DenseNetTimeDistributed_blockgoer.npy']
+dataset='lm'
+load_metrics=False
 
+if dataset=='cv':
+	experiment_list=[
+		'prediction_ConvLSTM_seq2seq_loneish.npy',
+		'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
+		#'prediction_ConvLSTM_seq2seq_bi_60x2_loneish.npy',
+		#'prediction_FCN_ConvLSTM_seq2seq_bi_skip_loneish.npy',
+		'prediction_DenseNetTimeDistributed_blockgoer.npy']
+elif dataset=='lm':
+	experiment_list=[
+		#'prediction_ConvLSTM_seq2seq_lmish.npy',
+		#'prediction_ConvLSTM_seq2seq_bi_lmish.npy',
+		'prediction_ConvLSTM_seq2seq_bi_60x2_lmish.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lmish.npy',
+		'prediction_DenseNetTimeDistributed_lmish.npy']
+	
 if load_metrics==False:
 	experiment_metrics=experiments_analyze(dataset,experiment_list)
-	np.save("experiment_metrics.npy",experiment_metrics)
+	np.save("experiment_metrics_"+dataset+".npy",experiment_metrics)
 
 else:
-	experiment_metrics=np.load("experiment_metrics.npy")
+	experiment_metrics=np.load("experiment_metrics_"+dataset+".npy")
 experiments_plot(experiment_metrics,experiment_list)
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
