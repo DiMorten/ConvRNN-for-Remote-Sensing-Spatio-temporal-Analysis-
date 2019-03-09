@@ -1,13 +1,20 @@
 dataset=$1 # could be cv or lem
 
 
-if [ "$dataset" == "cv" ]
+if [ "$dataset" == "cv_seq1" ]
 then
 	dataset_path="../cv_data/"
 	t_len=7
 	im_h=8492
 	im_w=7995
 	class_n=12 #11+bcknd
+elif [ "$dataset" == "cv" ]
+then
+	dataset_path="../cv_data/"
+	t_len=14
+	im_h=8492
+	im_w=7995
+	class_n=12 #11+bcknd 
 else
 	dataset_path="../lm_data/"
 	t_len=13
