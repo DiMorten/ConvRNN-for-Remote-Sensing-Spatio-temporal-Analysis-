@@ -3,13 +3,21 @@ id=$1
 model=$2
 dataset=$3 # could be cv or lem
 
-if [ "$dataset" == "cv" ]
+if [ "$dataset" == "cv_seq1" ]
 then
 	filename="campo_verde"
 	results_path='../results/seq2seq_ignorelabel/cv/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
 	sequence_len=7
 	class_n=12
+elif [ "$dataset" == "cv" ]
+then
+	filename="campo_verde"
+	results_path='../results/seq2seq_ignorelabel/cv/'
+	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
+	sequence_len=14
+	class_n=12
+
 else
 	filename="lm"
 	results_path='../results/seq2seq_ignorelabel/lm/'
