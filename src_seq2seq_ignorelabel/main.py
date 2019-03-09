@@ -1477,7 +1477,7 @@ if __name__ == '__main__':
 	model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
 	deb.prints(data.patches['train']['label'].shape)
 	model.loss_weights_estimate(data)
-	
+
 	# === SELECT VALIDATION SET FROM TRAIN SET
 	val_set = True # fix this
 	if val_set:

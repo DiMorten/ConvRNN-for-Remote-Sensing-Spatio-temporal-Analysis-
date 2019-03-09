@@ -1,5 +1,5 @@
 KERAS_BACKEND=tensorflow
-id='filtersizefix2'
+id='checkingweights'
 
 #dataset='campo_verde'
 
@@ -22,5 +22,5 @@ dataset='cv'
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi_60x2' $dataset
 #. experiment_automation.sh $id 'FCN_ConvLSTM_seq2seq_bi_skip' $dataset
 
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset 
+. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
 

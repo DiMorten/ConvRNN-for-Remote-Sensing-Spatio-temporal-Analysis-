@@ -222,7 +222,7 @@ def experiments_plot(metrics,experiment_list):
 	
 	plt.show()
 
-dataset='lm'
+dataset='cv'
 load_metrics=True
 mode='each_date'
 #mode='global'
@@ -232,7 +232,8 @@ if dataset=='cv':
 		'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
 		#'prediction_ConvLSTM_seq2seq_bi_60x2_loneish.npy',
 		#'prediction_FCN_ConvLSTM_seq2seq_bi_skip_loneish.npy',
-		'prediction_DenseNetTimeDistributed_blockgoer.npy']
+		#'prediction_DenseNetTimeDistributed_blockgoer.npy',
+		'prediction_DenseNetTimeDistributed_128x2_filtersizefix2.npy']
 elif dataset=='lm':
 	experiment_list=[
 		'prediction_ConvLSTM_seq2seq_filtersizefix.npy',

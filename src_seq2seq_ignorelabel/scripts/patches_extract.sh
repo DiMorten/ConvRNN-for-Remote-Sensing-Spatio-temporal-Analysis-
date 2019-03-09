@@ -1,7 +1,7 @@
 dataset=$1 # could be cv or lem
 
 
-if [ "$dataset" == "campo_verde" ]
+if [ "$dataset" == "cv" ]
 then
 	dataset_path="../cv_data/"
 	t_len=7
