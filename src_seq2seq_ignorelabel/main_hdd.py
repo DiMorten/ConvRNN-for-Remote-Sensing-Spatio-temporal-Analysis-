@@ -30,7 +30,7 @@ from metrics import fmeasure,categorical_accuracy
 import deb
 from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label
 from keras.models import load_model
-from keras.layers import ConvLSTM2D, ConvGRU2D
+from keras.layers import ConvLSTM2D
 from keras.utils.vis_utils import plot_model
 from keras.regularizers import l2
 parser = argparse.ArgumentParser(description='')
@@ -143,11 +143,11 @@ class Dataset(NetObject):
 		#self.patches_list['test']['label']=glob.glob(self.path['test']['label']+'*.npy')
 		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
 		
-		self.patches['train']['in'],self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'])
+		self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'], np_load=False)
 		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
-		self.patches['test']['in'],self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'])
-		deb.prints(self.patches['train']['in'].shape)
-		deb.prints(self.patches['test']['in'].shape)
+		self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'], np_load=False)
+		#deb.prints(self.patches['train']['in'].shape)
+		#deb.prints(self.patches['test']['in'].shape)
 		deb.prints(self.patches['train']['label'].shape)
 		self.dataset=None
 		unique=np.unique(self.patches['train']['label'])
@@ -161,12 +161,12 @@ class Dataset(NetObject):
 
 		deb.prints(len(self.patches_list['test']['label']))
 		deb.prints(len(self.patches_list['test']['ims']))
-		deb.prints(self.patches['train']['in'].shape)
-		deb.prints(self.patches['train']['in'].dtype)
+		#deb.prints(self.patches['train']['in'].shape)
+		#deb.prints(self.patches['train']['in'].dtype)
 		
 		deb.prints(self.patches['train']['label'].shape)
 		
-		self.patches['train']['n']=self.patches['train']['in'].shape[0]
+		self.patches['train']['n']=self.patches['train']['label'].shape[0]
 		self.patches['train']['idx']=range(self.patches['train']['n'])
 
 	def batch_label_to_one_hot(self,im):
@@ -177,14 +177,20 @@ class Dataset(NetObject):
 			im_one_hot[:,:,:,:,clss][im[:,:,:,:]==clss]=1
 		return im_one_hot
 
-	def folder_load(self,folder_path):
+	def folder_load(self,folder_path,np_load=True):
 		paths=glob.glob(folder_path+'*.npy')
 		files=[]
 		deb.prints(len(paths))
-		for path in paths:
-			#print(path)
-			files.append(np.load(path))
-		return np.asarray(files),paths
+		if np_load==True:
+			for path in paths:
+				#print(path)
+				files.append(np.load(path))
+			return np.asarray(files),paths
+
+		else:
+			return paths
+
+
 	def subset_create(self, path,patch_step):
 		image = self.image_load(path)
 		image['label_rgb']=image['label'].copy()
@@ -1478,7 +1484,7 @@ if __name__ == '__main__':
 	deb.prints(data.patches['train']['label'].shape)
 
 	# === SELECT VALIDATION SET FROM TRAIN SET
-	val_set = True # fix this
+	val_set = False # fix this
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
@@ -1542,18 +1548,18 @@ if __name__ == '__main__':
 		data.patches['val']['label'],model.class_n)
 		
 	deb.prints(data.patches['val']['label'].shape)
-	#=========== Hannover
+	# #=========== Hannover
 
-	metrics=['accuracy']
-	#metrics=['accuracy',fmeasure,categorical_accuracy]
-	model.compile(loss='binary_crossentropy',
-				  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
-	model_load=False
-	if model_load:
-		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-		model.test(data)
+	# metrics=['accuracy']
+	# #metrics=['accuracy',fmeasure,categorical_accuracy]
+	# model.compile(loss='binary_crossentropy',
+	# 			  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
+	# model_load=False
+	# if model_load:
+	# 	model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
+	# 	model.test(data)
 	
-	if args.debug:
-		deb.prints(np.unique(data.patches['train']['label']))
-		deb.prints(data.patches['train']['label'].shape)
-	model.train(data)
+	# if args.debug:
+	# 	deb.prints(np.unique(data.patches['train']['label']))
+	# 	deb.prints(data.patches['train']['label'].shape)
+	# model.train(data)

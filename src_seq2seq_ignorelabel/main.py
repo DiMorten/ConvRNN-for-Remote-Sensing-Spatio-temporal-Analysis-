@@ -159,6 +159,9 @@ class Dataset(NetObject):
 		self.patches['train']['label']=self.batch_label_to_one_hot(self.patches['train']['label'])
 		self.patches['test']['label']=self.batch_label_to_one_hot(self.patches['test']['label'])
 
+		self.patches['train']['in']=self.patches['train']['in'].astype(np.float32)
+		self.patches['test']['in']=self.patches['test']['in'].astype(np.float32)
+
 		deb.prints(len(self.patches_list['test']['label']))
 		deb.prints(len(self.patches_list['test']['ims']))
 		deb.prints(self.patches['train']['in'].shape)
@@ -262,7 +265,7 @@ class Dataset(NetObject):
 
 #=============== METRICS CALCULATION ====================#
 	def ims_flatten(self,ims):
-		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1])).astype(np.float64)
+		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1])).astype(np.float32)
 
 	def average_acc(self,y_pred,y_true):
 		correct_per_class=np.zeros(self.class_n)
@@ -1268,7 +1271,7 @@ class NetModel(NetObject):
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'], np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
+					batch['train']['in'].astype(np.float32), np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
