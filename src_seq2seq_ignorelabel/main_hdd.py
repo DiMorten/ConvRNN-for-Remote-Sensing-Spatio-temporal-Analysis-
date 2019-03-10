@@ -162,8 +162,8 @@ class Dataset(NetObject):
 		#self.patches['train']['in']=self.patches['train']['in'].astype(np.float32)
 		#self.patches['test']['in']=self.patches['test']['in'].astype(np.float32)
 
-		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
-		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
+		self.patches['train']['label']=self.patches['train']['label'].astype(np.uint8)
+		self.patches['test']['label']=self.patches['test']['label'].astype(np.uint8)
 
 
 		deb.prints(len(self.patches_list['test']['label']))
@@ -184,8 +184,9 @@ class Dataset(NetObject):
 			im_one_hot[:,:,:,:,clss][im[:,:,:,:]==clss]=1
 		return im_one_hot
 
-	def folder_load(self,folder_path,np_load=True):
-		paths=glob.glob(folder_path+'*.npy')
+	def folder_load(self,folder_path=None,np_load=True,paths=None):
+		if paths==None:
+			paths=glob.glob(folder_path+'*.npy')
 		files=[]
 		deb.prints(len(paths))
 		if np_load==True:
@@ -1193,9 +1194,10 @@ class NetModel(NetObject):
 		##data.patches['test']['in'] = normalize(data.patches['test']['in'].astype('float32'))
 
 		# Computing the number of batches
-		data.patches['train']['batch_n'] = data.patches['train']['in'].shape[0]//self.batch['train']['size']
-		data.patches['test']['batch_n'] = data.patches['test']['in'].shape[0]//self.batch['test']['size']
-		data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
+		data.patches['train']['batch_n'] = len(data.patches_list['train']['ims'])//self.batch['train']['size']
+		data.patches['test']['batch_n'] = len(data.patches_list['test']['ims'])//self.batch['test']['size']
+		if self.val_set:
+			data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
 
 		deb.prints(data.patches['train']['batch_n'])
 
@@ -1244,9 +1246,10 @@ class NetModel(NetObject):
 		
 		#==================== ESTIMATE BATCH NUMBER===============================#
 		batch = {'train': {}, 'test': {}, 'val':{}}
-		self.batch['train']['n'] = data.patches['train']['in'].shape[0] // self.batch['train']['size']
-		self.batch['test']['n'] = data.patches['test']['in'].shape[0] // self.batch['test']['size']
-		self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
+		self.batch['train']['n'] = len(data.patches_list['train']['ims']) // self.batch['train']['size']
+		self.batch['test']['n'] = len(data.patches_list['test']['ims']) // self.batch['test']['size']
+		if self.val_set:
+			self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
 
 		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 		deb.prints(data.patches['test']['label'].shape)
@@ -1258,15 +1261,17 @@ class NetModel(NetObject):
 		#data.im_reconstruct(subset='test',mode='label')
 		#for epoch in [0,1]:
 		#==============================START TRAIN/TEST LOOP============================#
+		train_randomization=False
 		for epoch in range(self.epochs):
-
-			idxs=np.random.permutation(data.patches['train']['in'].shape[0])
-			data.patches['train']['in']=data.patches['train']['in'][idxs]
-			data.patches['train']['label']=data.patches['train']['label'][idxs]
+			if train_randomization==True:
+				idxs=np.random.permutation(data.patches['train']['in'].shape[0])
+				data.patches['train']['in']=data.patches['train']['in'][idxs]
+				data.patches['train']['label']=data.patches['train']['label'][idxs]
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
 			self.metrics['test']['loss'] = np.zeros((1, 2))
-			self.metrics['val']['loss'] = np.zeros((1, 2))
+			if self.val_set:
+				self.metrics['val']['loss'] = np.zeros((1, 2))
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
@@ -1277,11 +1282,13 @@ class NetModel(NetObject):
 				idx0 = batch_id*self.batch['train']['size']
 				idx1 = (batch_id+1)*self.batch['train']['size']
 
-				batch['train']['in'] = data.patches['train']['in'][idx0:idx1]
+				batch['train']['in'],_ = data.folder_load(
+					paths=data.patches_list['train']['ims'][idx0:idx1])
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'], np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
+					batch['train']['in'].astype(np.float32), 
+					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
@@ -1455,7 +1462,7 @@ if __name__ == '__main__':
 		args.patience=15
 	
 	
-	val_set=True
+	val_set=False
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
 	#val_set_mode='random'
@@ -1491,7 +1498,7 @@ if __name__ == '__main__':
 	deb.prints(data.patches['train']['label'].shape)
 
 	# === SELECT VALIDATION SET FROM TRAIN SET
-	val_set = False # fix this
+	
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
@@ -1530,7 +1537,7 @@ if __name__ == '__main__':
 
 		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
 
-		return out	
+		return out.astype(np.uint8)	
 
 	# def label_bcknd_from_0_to_last(label,class_n):	
 	# 	print("Changing bcknd from 0 to last...")
@@ -1551,6 +1558,8 @@ if __name__ == '__main__':
 
 	data.patches['test']['label']=label_bcknd_from_0_to_last(
 		data.patches['test']['label'],model.class_n)
+
+	deb.prints(data.patches['train']['label'].dtype)
 	##data.patches['val']['label']=label_bcknd_from_0_to_last(
 	##	data.patches['val']['label'],model.class_n)
 		
