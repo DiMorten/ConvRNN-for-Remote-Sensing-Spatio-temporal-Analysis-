@@ -159,10 +159,17 @@ class Dataset(NetObject):
 		self.patches['train']['label']=self.batch_label_to_one_hot(self.patches['train']['label'])
 		self.patches['test']['label']=self.batch_label_to_one_hot(self.patches['test']['label'])
 
+		#self.patches['train']['in']=self.patches['train']['in'].astype(np.float32)
+		#self.patches['test']['in']=self.patches['test']['in'].astype(np.float32)
+
+		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
+		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
+
+
 		deb.prints(len(self.patches_list['test']['label']))
 		deb.prints(len(self.patches_list['test']['ims']))
 		#deb.prints(self.patches['train']['in'].shape)
-		#deb.prints(self.patches['train']['in'].dtype)
+		deb.prints(self.patches['train']['label'].dtype)
 		
 		deb.prints(self.patches['train']['label'].shape)
 		
@@ -1544,22 +1551,22 @@ if __name__ == '__main__':
 
 	data.patches['test']['label']=label_bcknd_from_0_to_last(
 		data.patches['test']['label'],model.class_n)
-	data.patches['val']['label']=label_bcknd_from_0_to_last(
-		data.patches['val']['label'],model.class_n)
+	##data.patches['val']['label']=label_bcknd_from_0_to_last(
+	##	data.patches['val']['label'],model.class_n)
 		
-	deb.prints(data.patches['val']['label'].shape)
+	##deb.prints(data.patches['val']['label'].shape)
 	# #=========== Hannover
 
-	# metrics=['accuracy']
-	# #metrics=['accuracy',fmeasure,categorical_accuracy]
-	# model.compile(loss='binary_crossentropy',
-	# 			  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
-	# model_load=False
-	# if model_load:
-	# 	model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-	# 	model.test(data)
+	metrics=['accuracy']
+	#metrics=['accuracy',fmeasure,categorical_accuracy]
+	model.compile(loss='binary_crossentropy',
+				  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
+	model_load=False
+	if model_load:
+		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
+		model.test(data)
 	
-	# if args.debug:
-	# 	deb.prints(np.unique(data.patches['train']['label']))
-	# 	deb.prints(data.patches['train']['label'].shape)
-	# model.train(data)
+	if args.debug:
+		deb.prints(np.unique(data.patches['train']['label']))
+		deb.prints(data.patches['train']['label'].shape)
+	model.train(data)

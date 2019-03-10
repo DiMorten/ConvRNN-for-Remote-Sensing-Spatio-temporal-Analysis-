@@ -44,6 +44,7 @@ rm -f log3.txt
 # ============== EXECUTE EXPERIMENT ===============
 cd ..
 python main.py -pl=32 -pstr=32 -psts=32 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
+#python main_hdd.py -pl=32 -pstr=32 -psts=32 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
 echo "${filename}_${model}_${id}"
 
 # ========= TAKE SCREENSHOT ===============
