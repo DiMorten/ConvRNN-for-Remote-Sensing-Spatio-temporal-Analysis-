@@ -602,7 +602,7 @@ class Dataset(NetObject):
 		
 		# Start balancing
 		balance={}
-		balance["out_n"]=self.class_n*samples_per_class
+		balance["out_n"]=(self.class_n-1)*samples_per_class
 		balance["out_in"]=np.zeros((balance["out_n"],) + self.patches["train"]["in"].shape[1::])
 
 		balance["out_labels"]=np.zeros((balance["out_n"],) + self.patches["train"]["label"].shape[1::])
