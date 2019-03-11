@@ -694,25 +694,15 @@ class Dataset(NetObject):
 				
 
 				
-				for batch_id in range(0,batch_n):
-					idx0 = batch_id*batch_size
-					idx1 = (batch_id+1)*batch_size
+				balance["in_list_squeezed"]=[balance['in_list'][i] for i in index_squeezed]
 
-					balance["in_list_squeezed"]=[balance['in_list'][i] for i in index_squeezed[idx0:idx1]]
-					
-					out_names=[balance["in_list_squeezed"][i].partition('ims')[0]+'ims_replicated'+balance["in_list_squeezed"][i].partition('ims')[2] for i in range(len(balance["in_list_squeezed"]))]					
-					batch_in,_=data.folder_load(
-						paths=balance["in_list_squeezed"])
-
-					deb.prints(batch_in.shape)
-					deb.prints(len(out_names))
-					deb.prints(len(balance["in_list_squeezed"]))
-					
-					for idx in range(len(balance["in_list_squeezed"])):
+				for path in balance["in_list_squeezed"]:
+						im=np.load(path)
 						name=out_dir+"patch_"+str(sample_count)+".npy"
-						np.save(name,batch_in[idx])
+						np.save(name,im)
 						names.append(name)
 						sample_count+=1
+							
 				balance['out_im_paths']+=names
 
 #				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index_squeezed]
