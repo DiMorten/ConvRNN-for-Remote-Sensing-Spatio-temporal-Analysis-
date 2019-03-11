@@ -268,7 +268,7 @@ class Dataset(NetObject):
 
 #=============== METRICS CALCULATION ====================#
 	def ims_flatten(self,ims):
-		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1])).astype(np.float32)
+		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1]))
 
 	def average_acc(self,y_pred,y_true):
 		correct_per_class=np.zeros(self.class_n)
@@ -338,6 +338,9 @@ class Dataset(NetObject):
 				
 		data['label_h'] = self.ims_flatten(data['label']) #(self.batch['test']['size']*self.patch_len*self.patch_len,self.class_n
 		deb.prints(data['label'].shape,debug,2)
+		
+		deb.prints(data['prediction_h'].dtype)
+		deb.prints(data['label'].dtype)
 		
 		data['label_h_int']=data['label_h'].argmax(axis=1)
 		data['prediction_h_int']=data['prediction_h'].argmax(axis=1)
@@ -1274,8 +1277,7 @@ class NetModel(NetObject):
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'].astype(np.float32), 
-					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+					batch['train']['in'].astype(np.float32), np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
@@ -1299,11 +1301,9 @@ class NetModel(NetObject):
 
 					if self.batch_test_stats:
 						self.metrics['val']['loss'] += self.graph.test_on_batch(
-							batch['val']['in'].astype(np.float32), 
-							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+							batch['val']['in'], np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
 
-					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['val']['in'].astype(np.float32),batch_size=self.batch['val']['size'])
+					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(batch['val']['in'],batch_size=self.batch['val']['size'])
 				self.metrics['val']['loss'] /= self.batch['val']['n']
 
 				metrics_val=data.metrics_get(data.patches['val'],debug=2)
@@ -1352,11 +1352,9 @@ class NetModel(NetObject):
 
 					if self.batch_test_stats:
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
-							batch['test']['in'].astype(np.float32), 
-							np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+							batch['test']['in'], np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
 
-					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['test']['in'].astype(np.float32),batch_size=self.batch['test']['size'])
+					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
 
 
 			#====================METRICS GET================================================#
@@ -1528,7 +1526,7 @@ if __name__ == '__main__':
 
 		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
 
-		return out.astype(np.uint8)	
+		return out.astype(np.int8)	
 
 	# def label_bcknd_from_0_to_last(label,class_n):	
 	# 	print("Changing bcknd from 0 to last...")
@@ -1551,8 +1549,7 @@ if __name__ == '__main__':
 		data.patches['test']['label'],model.class_n)
 	data.patches['val']['label']=label_bcknd_from_0_to_last(
 		data.patches['val']['label'],model.class_n)
-	data.patches['test']['in']=data.patches['test']['in'].astype(np.float32)
-	data.patches['train']['in']=data.patches['train']['in'].astype(np.float32)		
+		
 	deb.prints(data.patches['val']['label'].shape)
 	#=========== Hannover
 
