@@ -1,5 +1,5 @@
 KERAS_BACKEND=tensorflow
-id='float32int8'
+id='balanceno0'
 
 #dataset='campo_verde'
 

@@ -702,8 +702,10 @@ class Dataset(NetObject):
 						np.save(name,im)
 						names.append(name)
 						sample_count+=1
-							
-				balance['out_im_paths']+=names
+				names=sorted(names, 
+						key=lambda x: 
+						int(x.partition('patch_')[2].partition('.npy')[0]))	
+				balance['out_im_paths']=balance['out_im_paths']+names
 
 #				balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index_squeezed]
 			else:
@@ -724,7 +726,7 @@ class Dataset(NetObject):
 					augmented_labels = balance["label"]
 
 					expansion_ratio=int(samples_per_class/balance["label"].shape[0] - 1)
-
+					deb.prints(expansion_ratio)
 					cont_transf = 0
 					for times in range(expansion_ratio):
 
@@ -769,7 +771,7 @@ class Dataset(NetObject):
 						if cont_transf == 0:
 #							augmented_data_temp = np.rot90(augmented_data_temp,1,(2,3))
 							augmented_label_temp = np.rot90(augmented_label_temp,1,(2,3))
-						
+							#self.folder_load()
 						elif cont_transf == 1:
 #							augmented_data_temp = np.rot90(augmented_data_temp,2,(2,3))
 							augmented_label_temp = np.rot90(augmented_label_temp,2,(2,3))
@@ -801,11 +803,15 @@ class Dataset(NetObject):
 					#print(augmented_data.shape)
 					#print(augmented_labels.shape)
 					index = range(augmented_labels.shape[0])
-					index = np.sort(np.random.choice(index, samples_per_class, replace=True))
-										
+					index = np.random.choice(index, samples_per_class, replace=True)
+					
+					out_names_augmented=sorted(out_names_augmented, 
+						key=lambda x: 
+						int(x.partition('patch_')[2].partition('.npy')[0]))					
 					out_in_path=[out_names_augmented[i] for i in index]
+
 					balance["out_labels"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_labels[index]
-					balance['out_im_paths']+=out_in_path
+					balance['out_im_paths']=balance['out_im_paths']+out_in_path
 					#balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = augmented_data[index]
 				else:
 					replace=True
@@ -815,17 +821,28 @@ class Dataset(NetObject):
 					balance["out_in"][k*samples_per_class:k*samples_per_class + samples_per_class] = balance["in"][index]
 
 			k+=1
-		
-		idx = sorted(
-			np.random.permutation(balance["out_labels"].shape[0]))
-		deb.prints(len(balance['out_im_paths']))
-		deb.prints(balance["out_labels"].shape[0])
-		self.patches_list['train']['ims'] = [balance['out_im_paths'][i] for i in idx]
+		balance['out_im_paths']=sorted(balance['out_im_paths'], 
+				key=lambda x: 
+				int(x.partition('patch_')[2].partition('.npy')[0]))
+		remix_samples=False
+		if remix_samples==True:
+			idx = sorted(
+				np.random.permutation(balance["out_labels"].shape[0]))
+			deb.prints(len(balance['out_im_paths']))
+			deb.prints(balance["out_labels"].shape[0])
+			self.patches_list['train']['ims'] = [balance['out_im_paths'][i] for i in idx]
 
-		self.patches['train']['label'] = balance["out_labels"][idx]
+			self.patches['train']['label'] = balance["out_labels"][idx]
+
+		else:
+			self.patches_list['train']['ims'] = balance['out_im_paths'].copy()
+			
+			self.patches['train']['label'] = balance["out_labels"].copy()
 
 		deb.prints(np.unique(self.patches['train']['label'],return_counts=True))
 		deb.prints(len(self.patches_list['train']['ims']))
+		deb.prints(self.patches_list['train']['ims'][0:6])
+		print("End semantic balance")
 		# Replicate
 		#balance={}
 		#for clss in range(1,self.class_n):
