@@ -13,7 +13,7 @@ dataset='lm'
 #dataset='cv_seq1'
 
 # ==== EXTRACT PATCHES
-. patches_extract.sh $dataset
+#. patches_extract.sh $dataset
 # ===== USE MODEL
 
 #. experiment_automation.sh $id 'DenseNetTimeDistributed' $dataset 

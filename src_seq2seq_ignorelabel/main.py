@@ -268,7 +268,7 @@ class Dataset(NetObject):
 
 #=============== METRICS CALCULATION ====================#
 	def ims_flatten(self,ims):
-		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1])).astype(np.float32)
+		return np.reshape(ims,(np.prod(ims.shape[0:-1]),ims.shape[-1]))
 
 	def average_acc(self,y_pred,y_true):
 		correct_per_class=np.zeros(self.class_n)
@@ -1275,7 +1275,7 @@ class NetModel(NetObject):
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
 					batch['train']['in'].astype(np.float32), 
-					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
@@ -1300,7 +1300,7 @@ class NetModel(NetObject):
 					if self.batch_test_stats:
 						self.metrics['val']['loss'] += self.graph.test_on_batch(
 							batch['val']['in'].astype(np.float32), 
-							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
 					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(
 						batch['val']['in'].astype(np.float32),batch_size=self.batch['val']['size'])
@@ -1353,7 +1353,7 @@ class NetModel(NetObject):
 					if self.batch_test_stats:
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
 							batch['test']['in'].astype(np.float32), 
-							np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+							np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
 					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(
 						batch['test']['in'].astype(np.float32),batch_size=self.batch['test']['size'])
@@ -1528,7 +1528,7 @@ if __name__ == '__main__':
 
 		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
 
-		return out.astype(np.uint8)	
+		return out.astype(np.int8)	
 
 	# def label_bcknd_from_0_to_last(label,class_n):	
 	# 	print("Changing bcknd from 0 to last...")

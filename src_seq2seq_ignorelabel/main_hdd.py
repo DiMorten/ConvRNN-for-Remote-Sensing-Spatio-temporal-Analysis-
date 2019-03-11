@@ -188,7 +188,7 @@ class Dataset(NetObject):
 		if paths==None:
 			paths=glob.glob(folder_path+'*.npy')
 		files=[]
-		deb.prints(len(paths))
+		#deb.prints(len(paths))
 		if np_load==True:
 			for path in paths:
 				#print(path)
@@ -519,25 +519,26 @@ class Dataset(NetObject):
 		out=cv2.cvtColor(out.astype(np.uint8),cv2.COLOR_RGB2BGR)
 		return out
 	def val_set_get(self,mode='stratified',validation_split=0.2):
+		print("Val set get...")
 		clss_train_unique,clss_train_count=np.unique(self.patches['train']['label'].argmax(axis=4),return_counts=True)
 		deb.prints(clss_train_count)
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
-		
+		self.patches_list['val']={}
 		#===== CHOOSE VAL IDX
 		#mode='stratified'
 		if mode=='random':
 			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
-			
-
-			self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
+			self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in self.patches['val']['idx']]
 			self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
 		
 		elif mode=='stratified':
 			while True:
 				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
-				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
+				
+
+				self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in self.patches['val']['idx']]
 				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
-		
+ 		
 				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=4),return_counts=True)
 				
 				if not np.array_equal(clss_train_unique,clss_val_unique):
@@ -581,12 +582,17 @@ class Dataset(NetObject):
 
 		deb.prints(self.patches['val']['idx'].shape)
 
-		
-		deb.prints(self.patches['val']['in'].shape)
+		deb.prints(len(self.patches_list['train']['ims']))
+
+		deb.prints(len(self.patches_list['val']['ims']))
 		#deb.prints(data.patches['val']['label'].shape)
-		
-		self.patches['train']['in']=np.delete(self.patches['train']['in'],self.patches['val']['idx'],axis=0)
+
+		for idx in sorted(self.patches['val']['idx'],reverse=True):
+			del self.patches_list['train']['ims'][idx]
 		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
+		
+		deb.prints(len(self.patches_list['train']['ims']))
+		print("End val set get")
 		#deb.prints(data.patches['train']['in'].shape)
 		#deb.prints(data.patches['train']['label'].shape)
 	def semantic_balance(self,samples_per_class=500): # samples mean sequence of patches. Keep
@@ -1197,7 +1203,7 @@ class NetModel(NetObject):
 		data.patches['train']['batch_n'] = len(data.patches_list['train']['ims'])//self.batch['train']['size']
 		data.patches['test']['batch_n'] = len(data.patches_list['test']['ims'])//self.batch['test']['size']
 		if self.val_set:
-			data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
+			data.patches['val']['batch_n'] = len(data.patches_list['val']['ims'])//self.batch['val']['size']
 
 		deb.prints(data.patches['train']['batch_n'])
 
@@ -1249,7 +1255,7 @@ class NetModel(NetObject):
 		self.batch['train']['n'] = len(data.patches_list['train']['ims']) // self.batch['train']['size']
 		self.batch['test']['n'] = len(data.patches_list['test']['ims']) // self.batch['test']['size']
 		if self.val_set:
-			self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
+			self.batch['val']['n'] = len(data.patches_list['val']['ims']) // self.batch['val']['size']
 
 		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 		deb.prints(data.patches['test']['label'].shape)
@@ -1265,7 +1271,7 @@ class NetModel(NetObject):
 		for epoch in range(self.epochs):
 			if train_randomization==True:
 				idxs=np.random.permutation(data.patches['train']['in'].shape[0])
-				data.patches['train']['in']=data.patches['train']['in'][idxs]
+				data.patches_list['train']['ims']=[data.patches_list['train']['ims'][i] for i in idxs]
 				data.patches['train']['label']=data.patches['train']['label'][idxs]
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
@@ -1288,7 +1294,7 @@ class NetModel(NetObject):
 
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
 					batch['train']['in'].astype(np.float32), 
-					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.uint8))		# Accumulated epoch
+					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
@@ -1306,15 +1312,18 @@ class NetModel(NetObject):
 				for batch_id in range(0, self.batch['val']['n']):
 					idx0 = batch_id*self.batch['val']['size']
 					idx1 = (batch_id+1)*self.batch['val']['size']
-
-					batch['val']['in'] = data.patches['val']['in'][idx0:idx1]
+					batch['val']['in'],_ = data.folder_load(
+						paths=data.patches_list['val']['ims'][idx0:idx1])
 					batch['val']['label'] = data.patches['val']['label'][idx0:idx1]
 
 					if self.batch_test_stats:
 						self.metrics['val']['loss'] += self.graph.test_on_batch(
-							batch['val']['in'], np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
+							batch['val']['in'].astype(np.float32), 
+							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
-					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(batch['val']['in'],batch_size=self.batch['val']['size'])
+					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(
+						batch['val']['in'].astype(np.float32),
+						batch_size=self.batch['val']['size'])
 				self.metrics['val']['loss'] /= self.batch['val']['n']
 
 				metrics_val=data.metrics_get(data.patches['val'],debug=2)
@@ -1358,14 +1367,17 @@ class NetModel(NetObject):
 					idx0 = batch_id*self.batch['test']['size']
 					idx1 = (batch_id+1)*self.batch['test']['size']
 
-					batch['test']['in'] = data.patches['test']['in'][idx0:idx1]
+					batch['test']['in'],_ = data.folder_load(
+						paths=data.patches_list['test']['ims'][idx0:idx1])
 					batch['test']['label'] = data.patches['test']['label'][idx0:idx1]
 
 					if self.batch_test_stats:
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
-							batch['test']['in'], np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4))		# Accumulated epoch
+							batch['test']['in'].astype(np.float32), 
+							np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
-					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(batch['test']['in'],batch_size=self.batch['test']['size'])
+					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(
+						batch['test']['in'],batch_size=self.batch['test']['size'])
 
 
 			#====================METRICS GET================================================#
@@ -1462,7 +1474,7 @@ if __name__ == '__main__':
 		args.patience=15
 	
 	
-	val_set=False
+	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
 	#val_set_mode='random'
@@ -1537,7 +1549,7 @@ if __name__ == '__main__':
 
 		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
 
-		return out.astype(np.uint8)	
+		return out.astype(np.int8)
 
 	# def label_bcknd_from_0_to_last(label,class_n):	
 	# 	print("Changing bcknd from 0 to last...")
