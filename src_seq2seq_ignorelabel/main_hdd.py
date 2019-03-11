@@ -141,16 +141,20 @@ class Dataset(NetObject):
 
 		#self.patches_list['test']['ims']=glob.glob(self.path['test']['in']+'*.npy')
 		#self.patches_list['test']['label']=glob.glob(self.path['test']['label']+'*.npy')
-		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
+		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(
+			self.path['train']['label'],sort=True)
 		
-		self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'], np_load=False)
+		self.patches_list['train']['ims']=self.folder_load(
+			self.path['train']['in'], np_load=False,sort=True)
 		deb.prints(self.patches_list['train']['ims'][0:6])
 		deb.prints(self.patches_list['train']['label'][0:6])
 		
 		deb.prints(self.patches_list['train']['ims'][-7:-1])
-		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
+		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(
+			self.path['test']['label'],sort=True)
 		
-		self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'], np_load=False)
+		self.patches_list['test']['ims']=self.folder_load(
+			self.path['test']['in'], np_load=False,sort=True)
 		deb.prints(self.patches_list['test']['ims'][0:6])
 		deb.prints(self.patches_list['test']['ims'][-7:-1])
 
@@ -193,9 +197,14 @@ class Dataset(NetObject):
 			im_one_hot[:,:,:,:,clss][im[:,:,:,:]==clss]=1
 		return im_one_hot
 
-	def folder_load(self,folder_path=None,np_load=True,paths=None):
+	def folder_load(self,folder_path=None,np_load=True,
+		paths=None,sort=False):
 		if paths==None:
 			paths=glob.glob(folder_path+'*.npy')
+		if sort==True:
+			paths=sorted(paths, 
+				key=lambda x: 
+				int(x.partition('patch_')[2].partition('_')[0]))
 		files=[]
 		#deb.prints(len(paths))
 		if np_load==True:
@@ -549,7 +558,9 @@ class Dataset(NetObject):
 		
 		elif mode=='stratified':
 			while True:
-				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
+				self.patches['val']['idx']=np.sort(
+					np.random.choice(self.patches['train']['idx'],
+						self.patches['val']['n'],replace=False))
 				
 
 				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
@@ -569,7 +580,7 @@ class Dataset(NetObject):
 					
 						pass
 					else:
-						self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in sorted(self.patches['val']['idx'])]
+						self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in self.patches['val']['idx']]
 						break
 		elif mode=='random_v2':
 			while True:
@@ -1502,8 +1513,8 @@ if __name__ == '__main__':
 	
 	val_set=True
 	#val_set_mode='stratified'
-	val_set_mode='stratified'
-	#val_set_mode='random'
+	#val_set_mode='stratified'
+	val_set_mode='random'
 
 	deb.prints(data.patches['train']['label'].shape)
 
@@ -1598,10 +1609,10 @@ if __name__ == '__main__':
 		data.patches['test']['label'],model.class_n)
 
 	deb.prints(data.patches['train']['label'].dtype)
-	##data.patches['val']['label']=label_bcknd_from_0_to_last(
-	##	data.patches['val']['label'],model.class_n)
+	data.patches['val']['label']=label_bcknd_from_0_to_last(
+		data.patches['val']['label'],model.class_n)
 		
-	##deb.prints(data.patches['val']['label'].shape)
+	deb.prints(data.patches['val']['label'].shape)
 	# #=========== Hannover
 
 	metrics=['accuracy']
