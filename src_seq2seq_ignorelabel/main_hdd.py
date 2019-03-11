@@ -141,11 +141,20 @@ class Dataset(NetObject):
 
 		#self.patches_list['test']['ims']=glob.glob(self.path['test']['in']+'*.npy')
 		#self.patches_list['test']['label']=glob.glob(self.path['test']['label']+'*.npy')
-		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
+		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
 		
 		self.patches_list['train']['ims']=self.folder_load(self.path['train']['in'], np_load=False)
-		self.patches['train']['label'],self.patches_list['train']['label']=self.folder_load(self.path['train']['label'])
+		deb.prints(self.patches_list['train']['ims'][0:6])
+		deb.prints(self.patches_list['train']['label'][0:6])
+		
+		deb.prints(self.patches_list['train']['ims'][-7:-1])
+		self.patches['test']['label'],self.patches_list['test']['label']=self.folder_load(self.path['test']['label'])
+		
 		self.patches_list['test']['ims']=self.folder_load(self.path['test']['in'], np_load=False)
+		deb.prints(self.patches_list['test']['ims'][0:6])
+		deb.prints(self.patches_list['test']['ims'][-7:-1])
+
+		#deb.prints(self.patches[])
 		#deb.prints(self.patches['train']['in'].shape)
 		#deb.prints(self.patches['test']['in'].shape)
 		deb.prints(self.patches['train']['label'].shape)
@@ -190,7 +199,11 @@ class Dataset(NetObject):
 		files=[]
 		#deb.prints(len(paths))
 		if np_load==True:
+			count=0
 			for path in paths:
+				if count<5:
+					print(path)
+				count+=1
 				#print(path)
 				files.append(np.load(path))
 			return np.asarray(files),paths
@@ -1358,7 +1371,7 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			test_loop_each_epoch=True
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=True
