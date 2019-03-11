@@ -171,8 +171,8 @@ class Dataset(NetObject):
 		#self.patches['train']['in']=self.patches['train']['in'].astype(np.float32)
 		#self.patches['test']['in']=self.patches['test']['in'].astype(np.float32)
 
-		self.patches['train']['label']=self.patches['train']['label'].astype(np.uint8)
-		self.patches['test']['label']=self.patches['test']['label'].astype(np.uint8)
+		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
+		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
 
 
 		deb.prints(len(self.patches_list['test']['label']))
@@ -201,9 +201,9 @@ class Dataset(NetObject):
 		if np_load==True:
 			count=0
 			for path in paths:
-				if count<5:
-					print(path)
-				count+=1
+				#if count<5:
+				#	print(path)
+				#count+=1
 				#print(path)
 				files.append(np.load(path))
 			return np.asarray(files),paths
@@ -346,19 +346,20 @@ class Dataset(NetObject):
 		
 		#print("label_copy unque at start of metrics_get",
 	#		np.unique(data['label_copy'].argmax(axis=4),return_counts=True))
-		deb.prints(data['prediction'].shape,debug,2)
-		deb.prints(data['label'].shape,debug,2)
+		deb.prints(data['prediction'].shape,debug,1)
+		deb.prints(data['label'].shape,debug,1)
 		#deb.prints(data['label_copy'].shape,debug,2)
-
+		deb.prints(data['prediction'].dtype,debug,1)
+		deb.prints(data['label'].dtype,debug,1)
 		# ==========================IMGS FLATTEN ==========================================#
 		data['prediction_h'] = self.ims_flatten(data['prediction'])
-		deb.prints(data['prediction_h'].shape,debug,2)
+		deb.prints(data['prediction_h'].dtype,debug,1)
 
 		data['prediction_h']=self.probabilities_to_one_hot(data['prediction_h'])
-		deb.prints(data['prediction_h'].shape,debug,2)
+		deb.prints(data['prediction_h'].dtype,debug,1)
 				
 		data['label_h'] = self.ims_flatten(data['label']) #(self.batch['test']['size']*self.patch_len*self.patch_len,self.class_n
-		deb.prints(data['label'].shape,debug,2)
+		deb.prints(data['label'].dtype,debug,1)
 		
 		data['label_h_int']=data['label_h'].argmax(axis=1)
 		data['prediction_h_int']=data['prediction_h'].argmax(axis=1)
@@ -537,11 +538,13 @@ class Dataset(NetObject):
 		deb.prints(clss_train_count)
 		self.patches['val']={'n':int(self.patches['train']['n']*validation_split)}
 		self.patches_list['val']={}
+
+		deb.prints(self.patches_list['train']['ims'][0:5])
 		#===== CHOOSE VAL IDX
 		#mode='stratified'
 		if mode=='random':
 			self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
-			self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in self.patches['val']['idx']]
+			self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in sorted(self.patches['val']['idx'])]
 			self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
 		
 		elif mode=='stratified':
@@ -549,7 +552,6 @@ class Dataset(NetObject):
 				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
 				
 
-				self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in self.patches['val']['idx']]
 				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
  		
 				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=4),return_counts=True)
@@ -567,6 +569,7 @@ class Dataset(NetObject):
 					
 						pass
 					else:
+						self.patches_list['val']['ims']=[self.patches_list['train']['ims'][i] for i in sorted(self.patches['val']['idx'])]
 						break
 		elif mode=='random_v2':
 			while True:
@@ -599,12 +602,21 @@ class Dataset(NetObject):
 
 		deb.prints(len(self.patches_list['val']['ims']))
 		#deb.prints(data.patches['val']['label'].shape)
+		deb.prints(sorted(self.patches['val']['idx'],reverse=True)[0:5])
+		deb.prints(sorted(self.patches['val']['idx'])[0:5])
 
 		for idx in sorted(self.patches['val']['idx'],reverse=True):
 			del self.patches_list['train']['ims'][idx]
-		self.patches['train']['label']=np.delete(self.patches['train']['label'],self.patches['val']['idx'],axis=0)
+		
+		deb.prints(self.patches_list['train']['ims'][0:5])
+		deb.prints(self.patches_list['val']['ims'][0:5])
+		
+		self.patches['train']['label']=np.delete(
+			self.patches['train']['label'],
+			self.patches['val']['idx'],axis=0)
 		
 		deb.prints(len(self.patches_list['train']['ims']))
+
 		print("End val set get")
 		#deb.prints(data.patches['train']['in'].shape)
 		#deb.prints(data.patches['train']['label'].shape)
@@ -1284,7 +1296,7 @@ class NetModel(NetObject):
 		for epoch in range(self.epochs):
 			if train_randomization==True:
 				idxs=np.random.permutation(data.patches['train']['in'].shape[0])
-				data.patches_list['train']['ims']=[data.patches_list['train']['ims'][i] for i in idxs]
+				data.patches_list['train']['ims']=[data.patches_list['train']['ims'][i] for i in sorted(idxs)]
 				data.patches['train']['label']=data.patches['train']['label'][idxs]
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
@@ -1319,7 +1331,7 @@ class NetModel(NetObject):
 
 			#================== VAL LOOP=====================#
 			if self.val_set:
-				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
+				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1]).astype(np.float32)
 				self.batch_test_stats=True
 
 				for batch_id in range(0, self.batch['val']['n']):
@@ -1373,7 +1385,7 @@ class NetModel(NetObject):
 				self.graph.load_weights('weights_best.h5')
 			test_loop_each_epoch=True
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
-				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
+				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1]).astype(np.float32)
 				self.batch_test_stats=True
 
 				for batch_id in range(0, self.batch['test']['n']):
@@ -1445,6 +1457,7 @@ class NetModel(NetObject):
 			#metrics['average_acc'],metrics['per_class_acc']=self.average_acc(data['prediction_h'],data['label_h'])
 			deb.prints(metrics['per_class_acc'])
 			if self.val_set:
+
 				deb.prints(metrics_val['per_class_acc'])
 			
 			print('oa={}, aa={}, f1={}, f1_wght={}'.format(metrics['overall_acc'],
