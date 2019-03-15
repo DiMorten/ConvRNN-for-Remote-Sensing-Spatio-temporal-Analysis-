@@ -936,12 +936,12 @@ class NetModel(NetObject):
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq':
 			x = ConvLSTM2D(256,3,return_sequences=True,padding="same")(in_im)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
 							   beta_regularizer=l2(weight_decay))(x)
 			x = Activation('relu')(x)
-			self.graph = Model(in_im, out)
+			self.graph = Model(in_im, x)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
@@ -949,15 +949,15 @@ class NetModel(NetObject):
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
 
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
 							   beta_regularizer=l2(weight_decay))(x)
 			x = Activation('relu')(x)						 
-			self.graph = Model(in_im, out)
+			self.graph = Model(in_im, x)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi_60x2':
-			x = Bidirectional(ConvLSTM2D(60,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -1288,7 +1288,7 @@ class NetModel(NetObject):
 			#================== VAL LOOP=====================#
 			if self.val_set:
 				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
-				self.batch_test_stats=True
+				self.batch_test_stats=False
 
 				for batch_id in range(0, self.batch['val']['n']):
 					idx0 = batch_id*self.batch['val']['size']
@@ -1341,7 +1341,7 @@ class NetModel(NetObject):
 			test_loop_each_epoch=False
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
-				self.batch_test_stats=True
+				self.batch_test_stats=False
 
 				for batch_id in range(0, self.batch['test']['n']):
 					idx0 = batch_id*self.batch['test']['size']
@@ -1364,9 +1364,9 @@ class NetModel(NetObject):
 			deb.prints(idx1)
 			print("Epoch={}".format(epoch))	
 			
-			# Average epoch loss
-			self.metrics['test']['loss'] /= self.batch['test']['n']
-			
+			if self.batch_test_stats==True:
+				# Average epoch loss
+				self.metrics['test']['loss'] /= self.batch['test']['n']
 			# Get test metrics
 			metrics=data.metrics_get(data.patches['test'],debug=1)
 			
@@ -1418,13 +1418,15 @@ class NetModel(NetObject):
 			if self.val_set:
 				print('val oa={}, aa={}, f1={}, f1_wght={}'.format(metrics_val['overall_acc'],
 					metrics_val['average_acc'],metrics_val['f1_score'],metrics_val['f1_score_weighted']))
-			if self.val_set:
-			
-				print("Loss. Train={}, Val={}, Test={}".format(self.metrics['train']['loss'],
-					self.metrics['val']['loss'],self.metrics['test']['loss']))
+			if self.batch_test_stats==True:
+				if self.val_set:
+				
+					print("Loss. Train={}, Val={}, Test={}".format(self.metrics['train']['loss'],
+						self.metrics['val']['loss'],self.metrics['test']['loss']))
+				else:
+					print("Loss. Train={}, Test={}".format(self.metrics['train']['loss'],self.metrics['test']['loss']))
 			else:
-				print("Loss. Train={}, Test={}".format(self.metrics['train']['loss'],self.metrics['test']['loss']))
-
+				print("Train loss",self.metrics['train']['loss'])
 			#====================END METRICS GET===========================================#
 
 

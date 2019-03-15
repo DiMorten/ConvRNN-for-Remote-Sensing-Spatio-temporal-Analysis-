@@ -197,15 +197,16 @@ def experiments_plot(metrics,experiment_list):
 		exp_handler.append(ax.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['f1_score'], 
 			color = colors[exp_id], width = width/2))
-
+		ax.set_title('f1_score')
 		exp_handler2.append(ax2.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['average_acc'], 
 			color = colors[exp_id], width = width/2))
-
+		ax2.set_title('average_acc')
 		exp_handler3.append(ax3.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['overall_acc'], 
 			color = colors[exp_id], width = width/2))
-
+		ax3.set_title('overall_acc')
+		
 		
 		exp_id+=1
 	#ax.legend(tuple(exp_handler), tuple(experiment_list))
@@ -222,18 +223,22 @@ def experiments_plot(metrics,experiment_list):
 	
 	plt.show()
 
-dataset='cv'
-load_metrics=True
-mode='each_date'
+dataset='lm'
+load_metrics=False
 #mode='global'
+mode='each_date'
 if dataset=='cv':
 	experiment_list=[
-		'prediction_ConvLSTM_seq2seq_loneish.npy',
-		'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
+		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
+		##'prediction_ConvLSTM_seq2seq_loneish.npy',
+		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
 		#'prediction_ConvLSTM_seq2seq_bi_60x2_loneish.npy',
 		#'prediction_FCN_ConvLSTM_seq2seq_bi_skip_loneish.npy',
 		#'prediction_DenseNetTimeDistributed_blockgoer.npy',
-		'prediction_DenseNetTimeDistributed_128x2_filtersizefix2.npy']
+		#'prediction_DenseNetTimeDistributed_128x2_filtersizefix2.npy']
 elif dataset=='lm':
 	experiment_list=[
 		'prediction_ConvLSTM_seq2seq_filtersizefix.npy',
@@ -241,7 +246,17 @@ elif dataset=='lm':
 		'prediction_ConvLSTM_seq2seq_bi_60x2_lmish.npy',
 		#'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lmish.npy',
 		'prediction_DenseNetTimeDistributed_lmish.npy']
+	experiment_list=[
+		'prediction_DenseNetTimeDistributed_128x2_balanceno0.npy',
+		#'prediction_ConvLSTM_seq2seq_bi_lmish.npy',
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']
 	
+	experiment_list=[
+		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'
+		]
+
 if load_metrics==False:
 	experiment_metrics=experiments_analyze(dataset,experiment_list,
 		mode=mode)
