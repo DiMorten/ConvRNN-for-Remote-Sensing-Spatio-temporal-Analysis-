@@ -737,7 +737,7 @@ class NetModel(NetObject):
 		with open(self.report['val']['history_path'], "w") as text_file:
 			text_file.write("epoch,oa,aa,f1,class_acc\n")
 
-
+		self.model_save=True
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
 		pipe = keras.layers.BatchNormalization(axis=3)(pipe)
@@ -1374,6 +1374,9 @@ class NetModel(NetObject):
 				if test_loop_each_epoch==True:
 					self.early_stop['best_predictions']=data.patches['test']['prediction']
 				self.graph.save_weights('weights_best.h5')
+				if self.model_save==True:
+					self.graph.save('model_best.h5')
+				
 			print(self.early_stop['signal'])
 			if self.early_stop["signal"]==True:
 				self.early_stop['best_predictions']=data.patches['test']['prediction']
