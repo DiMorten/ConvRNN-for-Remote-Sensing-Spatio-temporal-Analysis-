@@ -234,14 +234,18 @@ def experiments_plot(metrics,experiment_list):
 
 dataset='lm'
 load_metrics=False
-#mode='global'
-mode='each_date'
+mode='global'
+#mode='each_date'
 if dataset=='cv':
 	experiment_list=[
-		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
+
+	#experiment_list=[
+	#	'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+	#	'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']
+	#	'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
