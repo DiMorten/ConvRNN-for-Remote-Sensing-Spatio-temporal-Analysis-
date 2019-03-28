@@ -226,10 +226,16 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 
 
-	t_len=len(metrics[0]['f1_score'])
+	if dataset=='cv':
+		valid_dates=[0,2,4,5,6,8,10,11,13]
+		t_len=len(valid_dates)
+	else:
+		t_len=len(metrics[0]['f1_score'])
+
 	print("t_len",t_len)
 	indices = range(t_len) # t_len
 	X = np.arange(t_len)
+
 	exp_id=0
 	width=0.5
 	colors=['b','y','c','m','r']
@@ -257,34 +263,62 @@ def experiments_plot(metrics,experiment_list,dataset):
 		metrics[exp_id]['overall_acc']=np.transpose(np.asarray(metrics[exp_id]['overall_acc']))*100
 		metrics[exp_id]['average_acc']=np.transpose(np.asarray(metrics[exp_id]['average_acc']))*100
 
+		if dataset=='cv':
+			
+			#print("metrics[exp_id]['average_acc'].shape",
+			#	metrics[exp_id]['average_acc'].shape)
+			metrics[exp_id]['f1_score']=metrics[exp_id]['f1_score'][valid_dates]
+			metrics[exp_id]['overall_acc']=metrics[exp_id]['overall_acc'][valid_dates]
+			metrics[exp_id]['average_acc']=metrics[exp_id]['average_acc'][valid_dates]
+			#print("metrics[exp_id]['average_acc'].shape",
+			#	metrics[exp_id]['average_acc'].shape)
 		exp_handler.append(ax.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['f1_score'], 
 			color = colors[exp_id], width = width/2))
 		ax.set_title('Average F1 Score (%)')
-		ax.set_xlabel('Epoch')
-		if dataset=='lm': 
-			ax.set_xlim(-0.5,13)
-			ax3.set_xlim(-0.5,13)
+		ax.set_xlabel('Date')
+		if dataset=='lm':
+			xlim=[-0.5,13] 
+			ylim=[10,76]
+			xticklabels=['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
+			ax.set_xlim(xlim[0],xlim[1])
+			ax3.set_xlim(xlim[0],xlim[1])
 			ax.set_ylim(10,76)
+			ax3.set_ylim(34,100)
 
-			ax3.set_ylim(30,100)
-
+			ax.set_xticks(X+width/2)
+			ax.set_xticklabels(xticklabels)
+			ax2.set_xticks(X+width/2)
+			ax2.set_xticklabels(xticklabels)
+			ax3.set_xticks(X+width/2)
+			ax3.set_xticklabels(xticklabels)
+			
 		elif dataset=='cv': 
-			ax.set_xlim(-0.5,14)
-			ax3.set_xlim(-0.5,14)
-			ax.set_ylim(5,71.3)
+			xlim=[-0.3,8.9]
+			xticklabels=['Oct','Nov','Dec','Jan','Feb','Mar','May','Jun','Jul']
 
-			ax3.set_ylim(50,94)
+			ax.set_xlim(xlim[0],xlim[1])
+			ax3.set_xlim(xlim[0],xlim[1])
+			ax.set_ylim(5,71.3)
+			ax3.set_ylim(57,94)
+
+			ax.set_xticks(X+width/2)
+			ax.set_xticklabels(xticklabels)
+			ax2.set_xticks(X+width/2)
+			ax2.set_xticklabels(xticklabels)
+			ax3.set_xticks(X+width/2)
+			ax3.set_xticklabels(xticklabels)
+
 		exp_handler2.append(ax2.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['average_acc'], 
 			color = colors[exp_id], width = width/2))
 		ax2.set_title('Average Accuracy')
-		ax2.set_xlabel('Epoch')
+		ax2.set_xlabel('Date')
 		exp_handler3.append(ax3.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['overall_acc'], 
 			color = colors[exp_id], width = width/2))
 		ax3.set_title('Overall Accuracy (%)')
-		ax3.set_xlabel('Epoch')
+		ax3.set_xlabel('Date')
 
 		#ax3.set_xticks(np.arange(5))
 		#ax3.set_xticklabels(('Tom', 'Dick', 'Harry', 'Sally', 'Sue'))
@@ -316,7 +350,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	
 	plt.show()
 
-dataset='lm'
+dataset='cv'
 load_metrics=True
 #mode='global'
 mode='each_date'
