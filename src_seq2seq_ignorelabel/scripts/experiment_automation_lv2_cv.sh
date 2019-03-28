@@ -1,5 +1,5 @@
 KERAS_BACKEND=tensorflow
-id='redoing'
+id='redoingz'
 
 #dataset='campo_verde'
 
@@ -9,7 +9,6 @@ id='redoing'
 
 
 
-dataset='cv'
 #dataset='cv_seq1'
 
 # ==== EXTRACT PATCHES
@@ -28,61 +27,32 @@ dataset='cv'
 
 
 
-#dataset='lm'
-. patches_extract.sh $dataset
-
-#. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
-#. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
-
-
 dataset='lm'
-
 . patches_extract.sh $dataset
 
 . experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
-
-id='redoing_2nd'
-
 
 dataset='cv'
 . patches_extract.sh $dataset
+
 . experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
+
+id='redoingz2'
 
 dataset='lm'
 . patches_extract.sh $dataset
+
 . experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
-
-id='redoing_3rd'
 
 dataset='cv'
 . patches_extract.sh $dataset
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
 
-dataset='lm'
-. patches_extract.sh $dataset
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
-
-id='redoing_4th'
-
-dataset='cv'
-. patches_extract.sh $dataset
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
-
-dataset='lm'
-. patches_extract.sh $dataset
 . experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset

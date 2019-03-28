@@ -80,4 +80,8 @@ src/repeat_results.pickle
 *.h5
 *.kate-swp
 *.mat
-*log*.txt
+*log
+*.txt
+*.eps
+*.pdf
+*.csv
