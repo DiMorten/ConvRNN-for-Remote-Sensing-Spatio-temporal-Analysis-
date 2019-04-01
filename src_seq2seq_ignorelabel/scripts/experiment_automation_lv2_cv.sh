@@ -1,5 +1,4 @@
 KERAS_BACKEND=tensorflow
-id='redoingz'
 
 #dataset='campo_verde'
 
@@ -27,12 +26,8 @@ id='redoingz'
 
 
 
-dataset='lm'
-. patches_extract.sh $dataset
 
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
+id='redoing3'
 
 dataset='cv'
 . patches_extract.sh $dataset
@@ -41,7 +36,6 @@ dataset='cv'
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
 
-id='redoingz2'
 
 dataset='lm'
 . patches_extract.sh $dataset
@@ -50,9 +44,3 @@ dataset='lm'
 . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
 
-dataset='cv'
-. patches_extract.sh $dataset
-
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset

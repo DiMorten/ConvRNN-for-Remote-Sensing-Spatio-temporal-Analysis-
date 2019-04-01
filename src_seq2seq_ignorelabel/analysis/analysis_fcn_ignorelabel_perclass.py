@@ -275,10 +275,17 @@ def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 		print("total metrics f1 score",metrics)
 		if dataset=='cv':
 			important_classes=[0,1,2,3,4,7,9]
+			important_dates=[0,2,4,5,6,8,10,11,13]
 		elif dataset=='lm':
 			important_classes=[0,1,2,3,4,5,6,7]
-
+			important_dates=range(metrics['f1_score'].shape[0])
+		print("metrics['f1_score'].shape",metrics['f1_score'].shape)
 		metrics['f1_score']=metrics['f1_score'][:,important_classes]
+		print("metrics['f1_score'].shape",metrics['f1_score'].shape)
+		metrics['f1_score']=metrics['f1_score'][important_dates,:]
+		print("metrics['f1_score'].shape",metrics['f1_score'].shape)
+		
+#		print("metrics['f1_score'].shape",metrics['f1_score'].shape)
 		metrics['f1_score']*=100
 		print("Exp id",experiment_group[0][exp_id])
 		np.savetxt(
@@ -368,7 +375,14 @@ if dataset=='cv':
 
 		['prediction_ConvLSTM_seq2seq_redoing.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
+
+		['prediction_ConvLSTM_seq2seq_redoingz.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
@@ -388,7 +402,10 @@ elif dataset=='lm':
 		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
 		['prediction_ConvLSTM_seq2seq_redoingz.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,

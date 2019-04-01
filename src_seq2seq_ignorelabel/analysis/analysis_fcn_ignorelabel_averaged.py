@@ -276,7 +276,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 			metrics[exp_id]['f1_score'], 
 			color = colors[exp_id], width = width/2))
 		ax.set_title('Average F1 Score (%)')
-		ax.set_xlabel('Date')
+		ax.set_xlabel('Month')
 		if dataset=='lm':
 			xlim=[-0.5,13] 
 			ylim=[10,76]
@@ -299,7 +299,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(5,71.3)
+			ax.set_ylim(5,73)
 			ax3.set_ylim(57,94)
 
 			ax.set_xticks(X+width/2)
@@ -313,12 +313,12 @@ def experiments_plot(metrics,experiment_list,dataset):
 			metrics[exp_id]['average_acc'], 
 			color = colors[exp_id], width = width/2))
 		ax2.set_title('Average Accuracy')
-		ax2.set_xlabel('Date')
+		ax2.set_xlabel('Month')
 		exp_handler3.append(ax3.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['overall_acc'], 
 			color = colors[exp_id], width = width/2))
 		ax3.set_title('Overall Accuracy (%)')
-		ax3.set_xlabel('Date')
+		ax3.set_xlabel('Month')
 
 		#ax3.set_xticks(np.arange(5))
 		#ax3.set_xticklabels(('Tom', 'Dick', 'Harry', 'Sally', 'Sue'))
@@ -366,7 +366,10 @@ if dataset=='cv':
 		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
 		['prediction_ConvLSTM_seq2seq_redoingz.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
@@ -386,7 +389,10 @@ elif dataset=='lm':
 		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
 		['prediction_ConvLSTM_seq2seq_redoingz.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
 
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
@@ -395,7 +401,8 @@ if load_metrics==False:
 
 else:
 	experiment_metrics=np.load("experiment_metrics_"+dataset+".npy")
-	print("Difference",np.average(experiment_metrics[2]['f1_score']-experiment_metrics[1]['f1_score']))
+	print("Difference F1 in percentage",np.average(experiment_metrics[2]['f1_score']-experiment_metrics[1]['f1_score']))
+	print("Difference OA in percentage",np.average(experiment_metrics[2]['overall_acc']-experiment_metrics[1]['overall_acc']))
 
 
 if mode=='each_date':
