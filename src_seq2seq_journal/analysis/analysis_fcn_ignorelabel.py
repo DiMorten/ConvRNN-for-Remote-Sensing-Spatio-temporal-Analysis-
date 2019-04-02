@@ -159,7 +159,6 @@ def experiment_analyze(dataset='cv',
 		metrics=metrics_get(label_test,predictions)
 
 		return metrics
-
 def experiments_analyze(dataset,experiment_list,mode='each_date'):
 	experiment_metrics=[]
 	for experiment in experiment_list:
@@ -170,176 +169,59 @@ def experiments_analyze(dataset,experiment_list,mode='each_date'):
 			mode=mode,debug=0))
 	return experiment_metrics
 
-def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
-	save=True
-	if save==True:	
 
-		experiment_metrics=[]
-		for group in experiment_group:
-			group_metrics=[]
-			for experiment in group:
-				print("Starting experiment:",experiment)
-				group_metrics.append(experiment_analyze(
-					dataset=dataset,
-					prediction_filename=experiment,
-					mode=mode,debug=0))
-			experiment_metrics.append(group_metrics)
+def experiments_plot(metrics,experiment_list):
 
-	#	for model_id in range(len(experiment_metrics[0])):
-	#		for date_id in range(len(experiment_metrics[0][model_id]):
-
-		np.save('experiment_metrics.npy',experiment_metrics)
-	else:
-		experiment_metrics=np.load('experiment_metrics.npy')
-	metrics={}
-	total_metrics=[]
-
-	for exp_id in range(len(experiment_metrics[0])):
-		exp_id=int(exp_id)
-		print(len(experiment_metrics))
-		print(len(experiment_metrics[0]))
-		print(experiment_metrics[0][0])
-		print(experiment_metrics[0][0]['f1_score'])
-		print(experiment_metrics[1][0]['f1_score'])
-
-		print("exp_id",exp_id)		
-		metrics['f1_score']=np.average(np.asarray(
-			[experiment_metrics[int(i)][exp_id]['f1_score'] for i in range(len(experiment_metrics))]),
-			axis=0)
-		print("metrics f1 score",metrics['f1_score'])
-		metrics['overall_acc']=np.average(np.asarray(
-			[experiment_metrics[int(i)][exp_id]['overall_acc'] for i in range(len(experiment_metrics))]),
-			axis=0)
-
-		metrics['average_acc']=np.average(np.asarray(
-			[experiment_metrics[int(i)][exp_id]['average_acc'] for i in range(len(experiment_metrics))]),
-			axis=0)
-		total_metrics.append(metrics.copy())
-		print("total metrics f1 score",total_metrics)
-
-	print("metrics['f1_score'].shape",metrics['f1_score'].shape)
-	print("total merics len",len(total_metrics))
-	print(total_metrics)
-	return total_metrics
-
-def experiments_plot(metrics,experiment_list,dataset):
-
-
-
-	if dataset=='cv':
-		valid_dates=[0,2,4,5,6,8,10,11,13]
-		t_len=len(valid_dates)
-	else:
-		t_len=len(metrics[0]['f1_score'])
-
+	t_len=len(metrics[0]['f1_score'])
 	print("t_len",t_len)
 	indices = range(t_len) # t_len
 	X = np.arange(t_len)
-
 	exp_id=0
 	width=0.5
 	colors=['b','y','c','m','r']
-	#colors=['#7A9AAF','#293C4B','#FF8700']
-	#colors=['#4225AC','#1DBBB9','#FBFA17']
-	##colors=['b','#FBFA17','c']
-	#colors=['#966A51','#202B3F','#DA5534']
 	exp_handler=[] # here I save the plot for legend later
 	exp_handler2=[] # here I save the plot for legend later
 	exp_handler3=[] # here I save the plot for legend later
-
 	figsize=(8,4)
 	fig, ax = plt.subplots(figsize=figsize)
 	fig2, ax2 = plt.subplots(figsize=figsize)
 	fig3, ax3 = plt.subplots(figsize=figsize)
 
-	fig.subplots_adjust(bottom=0.2)
-	fig2.subplots_adjust(bottom=0.2)
-	fig3.subplots_adjust(bottom=0.2)
-
 	for experiment in experiment_list:
 		print("experiment",experiment)
 		print(exp_id)
-		metrics[exp_id]['f1_score']=np.transpose(np.asarray(metrics[exp_id]['f1_score']))*100
-		metrics[exp_id]['overall_acc']=np.transpose(np.asarray(metrics[exp_id]['overall_acc']))*100
-		metrics[exp_id]['average_acc']=np.transpose(np.asarray(metrics[exp_id]['average_acc']))*100
+		metrics[exp_id]['f1_score']=np.transpose(np.asarray(metrics[exp_id]['f1_score']))
+		metrics[exp_id]['overall_acc']=np.transpose(np.asarray(metrics[exp_id]['overall_acc']))
+		metrics[exp_id]['average_acc']=np.transpose(np.asarray(metrics[exp_id]['average_acc']))
 
-		if dataset=='cv':
-			
-			#print("metrics[exp_id]['average_acc'].shape",
-			#	metrics[exp_id]['average_acc'].shape)
-			metrics[exp_id]['f1_score']=metrics[exp_id]['f1_score'][valid_dates]
-			metrics[exp_id]['overall_acc']=metrics[exp_id]['overall_acc'][valid_dates]
-			metrics[exp_id]['average_acc']=metrics[exp_id]['average_acc'][valid_dates]
-			#print("metrics[exp_id]['average_acc'].shape",
-			#	metrics[exp_id]['average_acc'].shape)
 		exp_handler.append(ax.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['f1_score'], 
 			color = colors[exp_id], width = width/2))
-		ax.set_title('Average F1 Score (%)')
-		ax.set_xlabel('Month')
-		if dataset=='lm':
-			xlim=[-0.5,13] 
-			ylim=[10,76]
-			xticklabels=['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
-			ax.set_xlim(xlim[0],xlim[1])
-			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(10,76)
-			ax3.set_ylim(34,100)
-
-			ax.set_xticks(X+width/2)
-			ax.set_xticklabels(xticklabels)
-			ax2.set_xticks(X+width/2)
-			ax2.set_xticklabels(xticklabels)
-			ax3.set_xticks(X+width/2)
-			ax3.set_xticklabels(xticklabels)
-			
-		elif dataset=='cv': 
-			xlim=[-0.3,8.9]
-			xticklabels=['Oct','Nov','Dec','Jan','Feb','Mar','May','Jun','Jul']
-
-			ax.set_xlim(xlim[0],xlim[1])
-			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(5,73)
-			ax3.set_ylim(57,94)
-
-			ax.set_xticks(X+width/2)
-			ax.set_xticklabels(xticklabels)
-			ax2.set_xticks(X+width/2)
-			ax2.set_xticklabels(xticklabels)
-			ax3.set_xticks(X+width/2)
-			ax3.set_xticklabels(xticklabels)
+		ax.set_title('Average F1 Score')
+		ax.set_xlabel('Sequence ID')
 
 		exp_handler2.append(ax2.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['average_acc'], 
 			color = colors[exp_id], width = width/2))
 		ax2.set_title('Average Accuracy')
-		ax2.set_xlabel('Month')
+		ax2.set_xlabel('Sequence ID')
+
 		exp_handler3.append(ax3.bar(X + float(exp_id)*width/2, 
 			metrics[exp_id]['overall_acc'], 
 			color = colors[exp_id], width = width/2))
-		ax3.set_title('Overall Accuracy (%)')
-		ax3.set_xlabel('Month')
-
-		#ax3.set_xticks(np.arange(5))
-		#ax3.set_xticklabels(('Tom', 'Dick', 'Harry', 'Sally', 'Sue'))
+		ax3.set_title('Overall Accuracy')
+		ax3.set_xlabel('Sequence ID')
+		
 		
 		exp_id+=1
-	
-	ax.legend(tuple(exp_handler), ('UConvLSTM','BConvLSTM','BDenseConvLSTM'),loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
-	ax2.legend(tuple(exp_handler2), ('UConvLSTM','BConvLSTM','BDenseConvLSTM'),loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
-	ax3.legend(tuple(exp_handler3), ('UConvLSTM','BConvLSTM','BDenseConvLSTM'),loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
+	ax.legend(tuple(exp_handler), ('ConvLSTM-PL','BiConvLSTM-PL','RDenseNet-PL'))
+	ax2.legend(tuple(exp_handler2), ('ConvLSTM-PL','BiConvLSTM-PL','RDenseNet-PL'))
 
-	#ax.set_rasterized(True)
-	#ax2.set_rasterized(True)
-	#ax3.set_rasterized(True)
+	ax3.legend(tuple(exp_handler3), ('ConvLSTM-PL','BiConvLSTM-PL','RDenseNet-PL'))
+	fig.savefig("f1_score_"+dataset+".png")
+	fig2.savefig("average_acc_"+dataset+".png")
+	fig3.savefig("overall_acc_"+dataset+".png")
 	
-	#fig.savefig("f1_score_"+dataset+".eps",format="eps",dpi=300)
-	#fig2.savefig("average_acc_"+dataset+".eps",format="eps",dpi=300)
-	#fig3.savefig("overall_acc_"+dataset+".eps",format="eps",dpi=300)
-	fig.savefig("f1_score_"+dataset+".png",dpi=300)
-	fig2.savefig("average_acc_"+dataset+".png",dpi=300)
-	fig3.savefig("overall_acc_"+dataset+".png",dpi=300)
-
 	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
 	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
 	#plt.bar(X + 0.50, data[2], color = 'r', width = 0.25)
@@ -350,30 +232,20 @@ def experiments_plot(metrics,experiment_list,dataset):
 	
 	plt.show()
 
-dataset='cv'
+dataset='lm'
 load_metrics=False
-#mode='global'
-mode='each_date'
+mode='global'
+#mode='each_date'
 if dataset=='cv':
-	experiment_groups=[[
-		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-
-		['prediction_ConvLSTM_seq2seq_redoing.npy',
+	experiment_list=[
 		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoing3.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 
+	#experiment_list=[
+	#	'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+	#	'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+	#	'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
@@ -382,34 +254,33 @@ if dataset=='cv':
 		#'prediction_DenseNetTimeDistributed_blockgoer.npy',
 		#'prediction_DenseNetTimeDistributed_128x2_filtersizefix2.npy']
 elif dataset=='lm':
-
-	experiment_groups=[[
+	experiment_list=[
+		'prediction_ConvLSTM_seq2seq_filtersizefix.npy',
+		#'prediction_ConvLSTM_seq2seq_bi_lmish.npy',
+		'prediction_ConvLSTM_seq2seq_bi_60x2_lmish.npy',
+		#'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lmish.npy',
+		'prediction_DenseNetTimeDistributed_lmish.npy']
+	experiment_list=[
+		'prediction_DenseNetTimeDistributed_128x2_balanceno0.npy',
+		#'prediction_ConvLSTM_seq2seq_bi_lmish.npy',
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']
+	
+	experiment_list=[
 		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
 		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-		['prediction_ConvLSTM_seq2seq_redoing.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'
+		]
 
 if load_metrics==False:
-	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
+	experiment_metrics=experiments_analyze(dataset,experiment_list,
 		mode=mode)
 	np.save("experiment_metrics_"+dataset+".npy",experiment_metrics)
 
 else:
 	experiment_metrics=np.load("experiment_metrics_"+dataset+".npy")
-	print("Difference F1 in percentage",np.average(experiment_metrics[2]['f1_score']-experiment_metrics[1]['f1_score']))
-	print("Difference OA in percentage",np.average(experiment_metrics[2]['overall_acc']-experiment_metrics[1]['overall_acc']))
-
 
 if mode=='each_date':
-	experiments_plot(experiment_metrics,experiment_groups[0],dataset)
+	experiments_plot(experiment_metrics,experiment_list)
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
 

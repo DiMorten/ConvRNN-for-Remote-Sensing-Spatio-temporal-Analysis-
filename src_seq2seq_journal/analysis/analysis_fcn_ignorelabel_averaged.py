@@ -351,7 +351,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	plt.show()
 
 dataset='cv'
-load_metrics=False
+load_metrics=True
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -369,10 +369,7 @@ if dataset=='cv':
 		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
-		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-		'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoing3.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
