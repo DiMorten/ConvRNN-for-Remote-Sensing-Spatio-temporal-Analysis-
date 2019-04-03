@@ -35,12 +35,12 @@ from keras.engine import Layer
 from keras.utils.generic_utils import get_custom_objects
 #from keras.utils.conv_utils import normalize_data_format
 
-
+convlstm_filters=60
 def DenseNetFCNTimeDistributed(input_shape, nb_dense_block=5, growth_rate=16, nb_layers_per_block=4,
                 reduction=0.0, dropout_rate=0.0, weight_decay=1E-4, init_conv_filters=48,
                 include_top=True, weights=None, input_tensor=None, classes=1, activation='softmax',
                 upsampling_conv=128, upsampling_type='upsampling', batchsize=None,
-                recurrent_filters=128):
+                recurrent_filters=convlstm_filters):
     """Instantiate the DenseNet FCN architecture.
         Note that when using TensorFlow,
         for best performance you should set
@@ -321,7 +321,7 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
                            reduction=0.0, dropout_rate=None, weight_decay=1E-4,
                            nb_layers_per_block=4, nb_upsampling_conv=128, upsampling_type='upsampling',
                            batchsize=None, init_conv_filters=48, input_shape=None, activation='softmax',
-                           recurrent_filters=128):
+                           recurrent_filters=convlstm_filters):
     ''' Build the DenseNet model
     Args:
         nb_classes: number of classes

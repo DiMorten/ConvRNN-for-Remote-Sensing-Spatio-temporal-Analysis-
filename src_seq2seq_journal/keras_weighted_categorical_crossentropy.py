@@ -33,7 +33,8 @@ def weighted_categorical_crossentropy(weights):
     
     return loss
 
-def weighted_categorical_crossentropy_ignoring_last_label(weights,date_id):
+def weighted_categorical_crossentropy_ignoring_last_label(weights,
+    date_id,t_len):
     """
     A weighted version of keras.objectives.categorical_crossentropy
     
@@ -96,10 +97,10 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights,date_id):
         ##    ,rep=date_id.shape[0],axis=0)))
        # K.shape(y_true*weights[date])
        # K.shape(lambda: y_true*weights[date])
-        
-        y_true = K.switch(K.equal(date_id,K.ones_like(date_id)*date),
-            y_true*K.variable(weights[date]), 
-            y_true)
+        for t_step in range(t_len):
+            y_true = K.switch(K.equal(date_id,K.ones_like(date_id)*t_step),
+                y_true*K.variable(weights[t_step]), 
+                y_true)
 
         #cross_entropy = -K.sum(y_true * log_softmax * weights , axis=1)
         cross_entropy = -K.sum(y_true * log_softmax , axis=1)

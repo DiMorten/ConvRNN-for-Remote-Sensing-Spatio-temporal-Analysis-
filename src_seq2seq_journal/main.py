@@ -1107,10 +1107,10 @@ class NetModel(NetObject):
 
 	def compile(self, optimizer, loss='binary_crossentropy', 
 		metrics=['accuracy',metrics.categorical_accuracy], #Don't use two
-		loss_weights=None,date_id=None):
+		loss_weights=None,date_id=None,t_len=None):
 		#loss_weighted=weighted_categorical_crossentropy(loss_weights)
 		loss_weighted=weighted_categorical_crossentropy_ignoring_last_label(
-			loss_weights,date_id)
+			loss_weights,date_id,t_len=t_len)
 		#sparse_accuracy_ignoring_last_label()
 		self.graph.compile(loss=loss_weighted, optimizer=optimizer, metrics=metrics)
 		#self.graph.compile(loss=sparse_accuracy_ignoring_last_label, optimizer=optimizer, metrics=metrics)
@@ -1501,7 +1501,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=False
+	balancing=True
 	if balancing==True:
 
 		
@@ -1577,15 +1577,18 @@ if __name__ == '__main__':
 	
 
 	# Temporally assigned weights
-	loss_weights=np.ones((args.t_len,
-		args.class_n-1))
+	#loss_weights=np.ones((args.t_len,
+	#	args.class_n-1))
+	loss_weights=np.repeat(np.expand_dims(model.loss_weights,axis=0),
+		args.t_len, axis=0)
+	deb.prints(loss_weights.shape)
 
 	metrics=['accuracy']
 	#metrics=['accuracy',fmeasure,categorical_accuracy]
 	model.compile(loss='binary_crossentropy',
 				  optimizer=adam, metrics=metrics,
 				  loss_weights=loss_weights, #  replace by model.loss_weights
-				  date_id=date_id)
+				  date_id=date_id,t_len=args.t_len)
 	model_load=False
 	if model_load:
 		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
