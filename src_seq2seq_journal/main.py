@@ -1105,9 +1105,12 @@ class NetModel(NetObject):
 	# 	print(self.graph.summary())
 
 
-	def compile(self, optimizer, loss='binary_crossentropy', metrics=['accuracy',metrics.categorical_accuracy],loss_weights=None):
+	def compile(self, optimizer, loss='binary_crossentropy', 
+		metrics=['accuracy',metrics.categorical_accuracy], #Don't use two
+		loss_weights=None,date_id=None):
 		#loss_weighted=weighted_categorical_crossentropy(loss_weights)
-		loss_weighted=weighted_categorical_crossentropy_ignoring_last_label(loss_weights)
+		loss_weighted=weighted_categorical_crossentropy_ignoring_last_label(
+			loss_weights,date_id)
 		#sparse_accuracy_ignoring_last_label()
 		self.graph.compile(loss=loss_weighted, optimizer=optimizer, metrics=metrics)
 		#self.graph.compile(loss=sparse_accuracy_ignoring_last_label, optimizer=optimizer, metrics=metrics)
@@ -1498,7 +1501,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
+	balancing=False
 	if balancing==True:
 
 		
@@ -1561,10 +1564,28 @@ if __name__ == '__main__':
 	deb.prints(data.patches['val']['label'].shape)
 	#=========== Hannover
 
+	date_id=np.zeros((args.batch_size_train,
+		args.t_len,args.patch_len,
+		args.patch_len)).astype(np.int8)
+
+	for t_step in range(args.t_len):
+		date_id[:,t_step,:,:]=t_step
+	deb.prints(np.unique(date_id,return_counts=True))
+	deb.prints(date_id.shape)
+	date_id=np.reshape(date_id,(-1))
+	deb.prints(date_id.shape)
+	
+
+	# Temporally assigned weights
+	loss_weights=np.ones((args.t_len,
+		args.class_n-1))
+
 	metrics=['accuracy']
 	#metrics=['accuracy',fmeasure,categorical_accuracy]
 	model.compile(loss='binary_crossentropy',
-				  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
+				  optimizer=adam, metrics=metrics,
+				  loss_weights=loss_weights, #  replace by model.loss_weights
+				  date_id=date_id)
 	model_load=False
 	if model_load:
 		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
