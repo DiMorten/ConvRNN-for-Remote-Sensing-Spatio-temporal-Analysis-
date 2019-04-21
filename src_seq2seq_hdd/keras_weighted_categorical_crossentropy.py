@@ -5,7 +5,6 @@ A weighted version of categorical_crossentropy for keras (2.0.6). This lets you 
 """
 from keras import backend as K
 import tensorflow as tf
-import deb
 def weighted_categorical_crossentropy(weights):
     """
     A weighted version of keras.objectives.categorical_crossentropy
@@ -33,8 +32,7 @@ def weighted_categorical_crossentropy(weights):
     
     return loss
 
-def weighted_categorical_crossentropy_ignoring_last_label(weights,
-    date_id,t_len):
+def weighted_categorical_crossentropy_ignoring_last_label(weights):
     """
     A weighted version of keras.objectives.categorical_crossentropy
     
@@ -46,66 +44,20 @@ def weighted_categorical_crossentropy_ignoring_last_label(weights,
         loss = weighted_categorical_crossentropy(weights)
         model.compile(loss=loss,optimizer='adam')
     """
-    weights_np=weights.copy()
-    date_id_np=date_id.copy()
-    deb.prints(weights.shape)
-    deb.prints(date_id.shape)
+    
     weights = K.variable(weights)
-    date_id = K.variable(date_id)
+        
     def loss(y_true, y_pred):
-        #date_id=K.zeros_like(y_true)
-        #ones_like_y_true=K.ones_like(y_true)
-
-
-        #date_id=K.switch(K.equal(ones_like_y_true*))
-        #date_id=
-
-        # This is a flatten. Flatten y_pred to (batch_size,-1)
         y_pred = K.reshape(y_pred, (-1, K.int_shape(y_pred)[-1]))
         log_softmax = tf.nn.log_softmax(y_pred)
-        
-        # Change to one-hot, with class_n+1 channels
-        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1) 
-        
-        # Eliminate last channel
+        #log_softmax = tf.log(y_pred)
+        #log_softmax = K.log(y_pred)
+
+        y_true = K.one_hot(tf.to_int32(K.flatten(y_true)), K.int_shape(y_pred)[-1]+1)
         unpacked = tf.unstack(y_true, axis=-1)
         y_true = tf.stack(unpacked[:-1], axis=-1)
 
-
-        date=0
-
-        deb.prints(K.int_shape(weights))
-        deb.prints(K.int_shape(date_id))
-        
-        deb.prints(K.int_shape(y_true))
-        y_true=tf.to_float(y_true)
-        deb.prints(K.int_shape(y_true))
-        deb.prints(K.int_shape(weights[date]))
-        deb.prints(K.int_shape(K.expand_dims(weights[date],axis=0)))
-        
-
-
-        #deb.prints(K.int_shape(K.repeat_elements(
-        #   K.expand_dims(K.variable(weights[date]),axis=0),
-        #    rep=date_id.shape[0],axis=0)))
-
-        deb.prints(K.int_shape(y_true*K.variable(weights[date])))
-
-
-        ##deb.prints(K.int_shape(y_true*K.repeat_elements(
-        ##    K.expand_dims(K.variable(weights[date]),axis=0)
-        ##    ,rep=date_id.shape[0],axis=0)))
-       # K.shape(y_true*weights[date])
-       # K.shape(lambda: y_true*weights[date])
-        
-        #cross_entropy = -K.sum(y_true * log_softmax * weights , axis=1)
-        cross_entropy = y_true * log_softmax 
-        for t_step in range(t_len):
-            cross_entropy = K.switch(K.equal(date_id,K.ones_like(date_id)*t_step),
-                cross_entropy*K.variable(weights[t_step]), 
-                cross_entropy)
-
-        cross_entropy = -K.sum(cross_entropy, axis=1)
+        cross_entropy = -K.sum(y_true * log_softmax * weights , axis=1)
         loss = K.mean(cross_entropy)
 
         return loss

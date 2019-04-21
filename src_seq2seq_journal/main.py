@@ -1133,10 +1133,39 @@ class NetModel(NetObject):
 				self.loss_weights[clss]=0
 		deb.prints(self.loss_weights)
 
-		self.loss_weights[1:]=1
+		#self.loss_weights[1:]=1
 		self.loss_weights=self.loss_weights[1:]
 		deb.prints(self.loss_weights.shape)
-		
+	def loss_weights_per_date_estimate(self,data):
+		#t_len=data.patches['train']['label'].shape[1]
+		#class_n=data.patches['train']['label'].shape[4]-1 
+		print("[@loss_weights_per_date_estimate]")
+		deb.prints(self.class_n)
+		self.loss_weights=np.zeros((self.t_len,self.class_n-1))# Bcknd weights is ignored later
+		for t_step in range(self.t_len):
+			#deb.prints(data.patches['train']['label'][:,t_step,:,:,:].shape)
+			unique,count=np.unique(data.patches['train']['label'][:,t_step,:,:,:].argmax(axis=3),return_counts=True)
+			unique=unique[1:] # No bcknd
+			count=count[1:].astype(np.float32)
+			weights_from_unique=np.max(count)/count
+			deb.prints(weights_from_unique)
+			deb.prints(np.max(count))
+			deb.prints(count)
+			deb.prints(unique)
+			t_step_loss_weights=np.zeros(self.class_n)
+			for clss in range(1,self.class_n): # class 0 is bcknd. Leave it in 0
+				
+				if clss in unique:
+					t_step_loss_weights[clss]=weights_from_unique[unique==clss]
+				else:
+					t_step_loss_weights[clss]=0
+			#deb.prints(t_step_loss_weights)
+
+			#t_step_loss_weights[1:]=1
+			t_step_loss_weights=t_step_loss_weights[1:]
+			#deb.prints(t_step_loss_weights.shape)
+			self.loss_weights[t_step]=t_step_loss_weights
+		deb.prints(self.loss_weights)			
 	def test(self,data):
 		data.patches['train']['batch_n'] = data.patches['train']['in'].shape[0]//self.batch['train']['size']
 		data.patches['test']['batch_n'] = data.patches['test']['in'].shape[0]//self.batch['test']['size']
@@ -1513,7 +1542,7 @@ if __name__ == '__main__':
 			
 		else:
 			data.semantic_balance(300)
-	model.loss_weights_estimate(data)
+	model.loss_weights_per_date_estimate(data)
 
 	model.class_n-=1
 	# Label background from 0 to last. 
@@ -1579,15 +1608,15 @@ if __name__ == '__main__':
 	# Temporally assigned weights
 	#loss_weights=np.ones((args.t_len,
 	#	args.class_n-1))
-	loss_weights=np.repeat(np.expand_dims(model.loss_weights,axis=0),
-		args.t_len, axis=0)
-	deb.prints(loss_weights.shape)
+	##loss_weights=np.repeat(np.expand_dims(model.loss_weights,axis=0),
+	##	args.t_len, axis=0)
+	##deb.prints(loss_weights.shape)
 
 	metrics=['accuracy']
 	#metrics=['accuracy',fmeasure,categorical_accuracy]
 	model.compile(loss='binary_crossentropy',
 				  optimizer=adam, metrics=metrics,
-				  loss_weights=loss_weights, #  replace by model.loss_weights
+				  loss_weights=model.loss_weights, #  replace by model.loss_weights
 				  date_id=date_id,t_len=args.t_len)
 	model_load=False
 	if model_load:

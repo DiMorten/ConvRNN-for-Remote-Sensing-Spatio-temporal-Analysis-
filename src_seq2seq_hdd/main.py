@@ -525,11 +525,6 @@ class Dataset(NetObject):
 			self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
 		
 		elif mode=='stratified':
-			# self.patches['train']['in'] are the input sequences of images of shape (val_sample_n,t_len,h,w,channel_n)
-			# self.patches['train']['label'] is the ground truth of shape (sample_n,t_len,h,w,class_n)
-			# self.patches['val']['in'] are the input sequences of images of shape (val_sample_n,t_len,h,w,channel_n)
-			# self.patches['val']['label'] is the ground truth of shape (sample_n,t_len,h,w,class_n)
-
 			while True:
 				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
 				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
@@ -537,26 +532,25 @@ class Dataset(NetObject):
 		
 				clss_val_unique,clss_val_count=np.unique(self.patches['val']['label'].argmax(axis=4),return_counts=True)
 				
-				# If validation set doesn't contain ALL classes from train set, repeat random choice
 				if not np.array_equal(clss_train_unique,clss_val_unique):
 					deb.prints(clss_train_unique)
 					deb.prints(clss_val_unique)
+					
 					pass
 				else:
 					percentages=clss_val_count/clss_train_count
 					deb.prints(percentages)
-					# Percentage for each class is equal to: (validation sample number)/(train sample number)*100
-					# If percentage from any class is larger than 20% repeat random choice
+					#if np.any(percentages<0.1) or np.any(percentages>0.3):
 					if np.any(percentages>0.2):
 					
 						pass
 					else:
-						# Else keep the validation set
 						break
 		elif mode=='random_v2':
 			while True:
 
-				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)				
+				self.patches['val']['idx']=np.random.choice(self.patches['train']['idx'],self.patches['val']['n'],replace=False)
+				
 
 				self.patches['val']['in']=self.patches['train']['in'][self.patches['val']['idx']]
 				self.patches['val']['label']=self.patches['train']['label'][self.patches['val']['idx']]
@@ -857,7 +851,7 @@ class NetModel(NetObject):
 
 	def build(self):
 		deb.prints(self.t_len)
-		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
+		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))		
 		weight_decay=1E-4
 		
 		if self.model_type=='DenseNet':
@@ -1057,44 +1051,6 @@ class NetModel(NetObject):
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		if self.model_type=='pyramid_dilated':
-
-			d1 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
-				dilation_rate=(2, 2)))(in_im)
-			d4 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
-				dilation_rate=(4, 4)))(in_im)
-			d8 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
-				dilation_rate=(8, 8)))(in_im)
-
-			x = keras.layers.concatenate([d1, d4, d8], axis=4)
-
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-						 padding='same'))(x)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-
-		if self.model_type=='pyramid_dilated_bconvlstm':
-
-			d1 = TimeDistributed(Conv2D(100, (3, 3), padding='same',
-				dilation_rate=(2, 2)))(in_im)
-			d4 = TimeDistributed(Conv2D(100, (3, 3), padding='same',
-				dilation_rate=(4, 4)))(in_im)
-			d8 = TimeDistributed(Conv2D(100, (3, 3), padding='same',
-				dilation_rate=(8, 8)))(in_im)
-
-			pdc = keras.layers.concatenate([d1, d4, d8], axis=4)
-			r1 = Bidirectional(ConvLSTM2D(16,3,return_sequences=True,
-							padding="same"))(pdc)
-			r2 = Bidirectional(ConvLSTM2D(16,3,return_sequences=True,
-							padding="same",dilation_rate=(2, 2)))(pdc)
-			x = keras.layers.concatenate([r1, r2], axis=4)
-
-
-
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-						 padding='same'))(x)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
 
 		#plot_model(self.graph, to_file='diagram_'+self.model_type+'.png', 
 		#	show_shapes=True, show_layer_names=True)
@@ -1174,7 +1130,7 @@ class NetModel(NetObject):
 				self.loss_weights[clss]=0
 		deb.prints(self.loss_weights)
 
-		self.loss_weights[1:]=1
+		#self.loss_weights[1:]=1
 		self.loss_weights=self.loss_weights[1:]
 		deb.prints(self.loss_weights.shape)
 		
@@ -1232,7 +1188,8 @@ class NetModel(NetObject):
 		# Computing the number of batches
 		data.patches['train']['batch_n'] = data.patches['train']['in'].shape[0]//self.batch['train']['size']
 		data.patches['test']['batch_n'] = data.patches['test']['in'].shape[0]//self.batch['test']['size']
-		data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
+		if self.val_set:
+			data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
 
 		deb.prints(data.patches['train']['batch_n'])
 
@@ -1264,7 +1221,7 @@ class NetModel(NetObject):
 		txt={'count':0,'val':{},'test':{}}
 		txt['val']={'metrics':[],'epoch':[],'loss':[]}
 		txt['test']={'metrics':[],'epoch':[],'loss':[]}
-		
+		self.early_stop['best_updated']=False
 		
 		#========= VAL INIT
 
@@ -1283,7 +1240,8 @@ class NetModel(NetObject):
 		batch = {'train': {}, 'test': {}, 'val':{}}
 		self.batch['train']['n'] = data.patches['train']['in'].shape[0] // self.batch['train']['size']
 		self.batch['test']['n'] = data.patches['test']['in'].shape[0] // self.batch['test']['size']
-		self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
+		if self.val_set:
+			self.batch['val']['n'] = data.patches['val']['in'].shape[0] // self.batch['val']['size']
 
 		data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 		deb.prints(data.patches['test']['label'].shape)
@@ -1303,7 +1261,8 @@ class NetModel(NetObject):
 			
 			self.metrics['train']['loss'] = np.zeros((1, 2))
 			self.metrics['test']['loss'] = np.zeros((1, 2))
-			self.metrics['val']['loss'] = np.zeros((1, 2))
+			if self.val_set:
+				self.metrics['val']['loss'] = np.zeros((1, 2))
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
@@ -1382,7 +1341,7 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			test_loop_each_epoch=True
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=False
@@ -1414,7 +1373,7 @@ class NetModel(NetObject):
 			# Get test metrics
 			metrics=data.metrics_get(data.patches['test'],debug=1)
 			
-			if self.early_stop['best_updated']==True:
+			if self.early_stop['best_updated']==True and self.val_set==True:
 				if test_loop_each_epoch==True:
 					self.early_stop['best_predictions']=data.patches['test']['prediction']
 				self.graph.save_weights('weights_best.h5')
@@ -1502,7 +1461,7 @@ if __name__ == '__main__':
 		args.patience=15
 	
 	
-	val_set=True
+	val_set=False
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
 	#val_set_mode='random'
@@ -1538,11 +1497,10 @@ if __name__ == '__main__':
 	deb.prints(data.patches['train']['label'].shape)
 
 	# === SELECT VALIDATION SET FROM TRAIN SET
-	val_set = True # fix this
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
+	balancing=False
 	if balancing==True:
 
 		
@@ -1598,11 +1556,13 @@ if __name__ == '__main__':
 
 	data.patches['test']['label']=label_bcknd_from_0_to_last(
 		data.patches['test']['label'],model.class_n)
-	data.patches['val']['label']=label_bcknd_from_0_to_last(
-		data.patches['val']['label'],model.class_n)
+	if val_set:
+		data.patches['val']['label']=label_bcknd_from_0_to_last(
+			data.patches['val']['label'],model.class_n)
+		deb.prints(data.patches['val']['label'].shape)
 	data.patches['test']['in']=data.patches['test']['in'].astype(np.float32)
 	data.patches['train']['in']=data.patches['train']['in'].astype(np.float32)		
-	deb.prints(data.patches['val']['label'].shape)
+	
 	#=========== Hannover
 
 	metrics=['accuracy']

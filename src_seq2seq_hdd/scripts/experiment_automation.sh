@@ -6,21 +6,21 @@ dataset=$3 # could be cv or lem
 if [ "$dataset" == "cv_seq1" ]
 then
 	filename="campo_verde"
-	results_path='../results/seq2seq_ignorelabel/cv/'
+	results_path='../results/seq2seq_hdd/cv/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
 	sequence_len=7
 	class_n=12
 elif [ "$dataset" == "cv" ]
 then
 	filename="campo_verde"
-	results_path='../results/seq2seq_ignorelabel/cv/'
+	results_path='../results/seq2seq_hdd/cv/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
 	sequence_len=14
 	class_n=12
 
 else
 	filename="lm"
-	results_path='../results/seq2seq_ignorelabel/lm/'
+	results_path='../results/seq2seq_hdd/lm/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/lm_data/"
 	sequence_len=13
 	class_n=15 # 14+bcknd
@@ -43,7 +43,7 @@ rm -f log3.txt
 #model='ConvLSTM_seq2seq_bi' # russworm bi .
 # ============== EXECUTE EXPERIMENT ===============
 cd ..
-python main.py -pl=32 -pstr=32 -psts=32 -bstr=16 -bsts=16 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
+python main.py -pl=32 -pstr=32 -psts=32 -bstr=32 -bsts=32 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
 #python main_hdd.py -pl=32 -pstr=32 -psts=32 -path=$dataset_path -tl=$sequence_len -cn=$class_n -chn=2 -mdl=$model
 echo "${filename}_${model}_${id}"
 

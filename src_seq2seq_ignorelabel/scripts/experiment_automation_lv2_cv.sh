@@ -44,6 +44,9 @@ KERAS_BACKEND=tensorflow
 # . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 # . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
 
-id='vstweightedloss'
+id='dilated'
 dataset='cv'
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'pyramid_dilated_bconvlstm' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'unet_bconvlstm' $dataset  # gonna test balancing after replication
+
+#. experiment_automation.sh $id 'pyramid_dilated_bconvlstm' $dataset  # gonna test balancing after replication
