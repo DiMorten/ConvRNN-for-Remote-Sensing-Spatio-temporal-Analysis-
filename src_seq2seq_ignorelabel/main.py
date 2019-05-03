@@ -1141,13 +1141,13 @@ class NetModel(NetObject):
 			e1 = Activation('relu')(e1)
 		elif self.model_type=='deeplabv3':
 
-			e1 = TimeDistributed(Conv2D(32, (3, 3), padding='same'))(in_im)
+			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same'))(in_im)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(e1)
 			e1 = Activation('relu')(e1)
 			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
 
-			e1 = TimeDistributed(Conv2D(64, (3, 3), padding='same'))(e1)
+			e1 = TimeDistributed(Conv2D(32, (3, 3), padding='same'))(e1)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(e1)
 			e1 = Activation('relu')(e1)

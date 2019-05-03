@@ -44,7 +44,7 @@ KERAS_BACKEND=tensorflow
 # . experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
 # . experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
 
-id='deeplab_param2_2m'
+id='deeplab_param2_2M'
 dataset='cv'
 #. experiment_automation.sh $id 'pyramid_dilated_bconvlstm' $dataset  # gonna test balancing after replication
 #. experiment_automation.sh $id 'FCN_ConvLSTM_seq2seq_bi_skip' $dataset  # gonna test balancing after replication
