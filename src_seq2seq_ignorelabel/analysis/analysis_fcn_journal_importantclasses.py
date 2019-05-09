@@ -20,8 +20,19 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
 	label_test=np.reshape(label_test,-1)
 	predictions=predictions[label_test<class_n]
-
 	label_test=label_test[label_test<class_n]
+
+	# Eliminate non important classes
+	class_list,class_count = np.unique(label_test,return_counts=True)
+	#print("Class unique before eliminating non important classes:",class_list,class_count)
+
+	class_count_min=10000
+	for count,idx in zip(class_count,class_list):
+		if count<class_count_min:
+			predictions=predictions[label_test!=idx]
+			label_test=label_test[label_test!=idx]
+	#print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
+
 	if debug>0:
 		print("Predictions",predictions.shape)
 		print("Label_test",label_test.shape)
@@ -302,7 +313,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(40,83)
+			ax.set_ylim(30,70)
 			ax3.set_ylim(65,94)
 
 			ax.set_xticks(X+width/2)
@@ -351,9 +362,9 @@ def experiments_plot(metrics,experiment_list,dataset):
 	#fig.savefig("f1_score_"+dataset+".eps",format="eps",dpi=300)
 	#fig2.savefig("average_acc_"+dataset+".eps",format="eps",dpi=300)
 	#fig3.savefig("overall_acc_"+dataset+".eps",format="eps",dpi=300)
-	fig.savefig("f1_score_"+dataset+".png",dpi=300)
-	fig2.savefig("average_acc_"+dataset+".png",dpi=300)
-	fig3.savefig("overall_acc_"+dataset+".png",dpi=300)
+	fig.savefig("f1_score_importantclasses_"+dataset+".png",dpi=300)
+	fig2.savefig("average_acc_importantclasses_"+dataset+".png",dpi=300)
+	fig3.savefig("overall_acc_importantclasses_"+dataset+".png",dpi=300)
 
 	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
 	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
@@ -365,8 +376,8 @@ def experiments_plot(metrics,experiment_list,dataset):
 	
 	plt.show()
 
-dataset='lm'
-load_metrics=True
+dataset='cv'
+load_metrics=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -433,17 +444,17 @@ if dataset=='cv':
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 	experiment_groups=[[
 		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_deeplab_param2_2M.npy',
+		'prediction_deeplabv3_lauras3.npy',
 		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
+		'prediction_DenseNetTimeDistributed_128x2_moreweights.npy'],
 		['prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_deeplab_param2_2M.npy',
+		'prediction_deeplabv3_lauras3.npy',
 		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_moreweights.npy']]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',

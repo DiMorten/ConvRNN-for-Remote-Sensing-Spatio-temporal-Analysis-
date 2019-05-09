@@ -7,6 +7,7 @@ if [ "$dataset" == "cv_seq1" ]
 then
 	filename="campo_verde"
 	results_path='../results/seq2seq_ignorelabel/cv/'
+	summary_save_path='../results/seq2seq_ignorelabel/summary/cv/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
 	sequence_len=7
 	class_n=12
@@ -14,6 +15,7 @@ elif [ "$dataset" == "cv" ]
 then
 	filename="campo_verde"
 	results_path='../results/seq2seq_ignorelabel/cv/'
+	summary_save_path='../results/seq2seq_ignorelabel/summary/cv/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
 	sequence_len=14
 	class_n=12
@@ -21,6 +23,7 @@ then
 else
 	filename="lm"
 	results_path='../results/seq2seq_ignorelabel/lm/'
+	summary_save_path='../results/seq2seq_ignorelabel/summary/lm/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/lm_data/"
 	sequence_len=13
 	class_n=15 # 14+bcknd
@@ -61,5 +64,6 @@ echo "${path}"
 # =============== MOVE PREDICTIONS TO RESULT FOLDER ======
 #results_path='../results/seq2seq_ignorelabel/cv/'
 cp prediction.npy "${results_path}prediction_${model}_${id}.npy"
+cp model_summary.txt "${summary_save_path}summary_${model}_${id}.txt" 
 cd scripts
 

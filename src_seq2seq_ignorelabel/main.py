@@ -864,7 +864,15 @@ class NetModel(NetObject):
 		deb.prints(self.t_len)
 		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
 		weight_decay=1E-4
-		
+		def dilated_layer(x,filter_size,dilation_rate=1, kernel_size=3):
+			x = TimeDistributed(Conv2D(filter_size, (3, 3), padding='same',
+				dilation_rate=(dilation_rate, dilation_rate)))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			x = Activation('relu')(x)
+			return x		
+
+
 		if self.model_type=='DenseNet':
 
 
@@ -1009,19 +1017,21 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='FCN_ConvLSTM_seq2seq_bi_skip':
-
-			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same'))(in_im)
+			fs=32
+			#fs=16
+			
+			e1 = TimeDistributed(Conv2D(fs, (3, 3), padding='same'))(in_im)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(e1)
 			e1 = Activation('relu')(e1)
 			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
-			e2 = TimeDistributed(Conv2D(32, (3, 3), padding='same'))(e1)
+			e2 = TimeDistributed(Conv2D(fs*2, (3, 3), padding='same'))(e1)
 			e2 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(e2)
 			e2 = Activation('relu')(e2)
 			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e2)
 
-			e3 = TimeDistributed(Conv2D(64, (3, 3), padding='same'))(e2)
+			e3 = TimeDistributed(Conv2D(fs*4, (3, 3), padding='same'))(e2)
 			e3 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(e3)
 			e3 = Activation('relu')(e3)
@@ -1031,27 +1041,27 @@ class NetModel(NetObject):
 			        padding="same"),merge_mode='concat')(e3)
 
 
-			d3 = TimeDistributed(Conv2DTranspose(64, (3, 3), strides=(
+			d3 = TimeDistributed(Conv2DTranspose(fs*4, (3, 3), strides=(
 			        2, 2), padding='same'))(x)
 			d3 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(d3)
 			d3 = Activation('relu')(d3)
 			d3 = keras.layers.concatenate([d3, e2], axis=4)
 
-			d2 = TimeDistributed(Conv2DTranspose(64, (3, 3), strides=(
+			d2 = TimeDistributed(Conv2DTranspose(fs*4, (3, 3), strides=(
 			        2, 2), padding='same'))(d3)
 			d2 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(d2)
 			d2 = Activation('relu')(d2)
 			d2 = keras.layers.concatenate([d2, e1], axis=4)
 
-			d1 = TimeDistributed(Conv2DTranspose(32, (3, 3), strides=(
+			d1 = TimeDistributed(Conv2DTranspose(fs*2, (3, 3), strides=(
 			        2, 2), padding='same'))(d2)
 			d1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(d1)
 			d1 = Activation('relu')(d1)
 			d1 = keras.layers.concatenate([d1, in_im], axis=4)
-			out = TimeDistributed(Conv2D(16, (3, 3),
+			out = TimeDistributed(Conv2D(fs, (3, 3),
 			                            padding='same'))(d1)
 			out = BatchNormalization(gamma_regularizer=l2(weight_decay),
 			                                    beta_regularizer=l2(weight_decay))(out)
@@ -1080,7 +1090,7 @@ class NetModel(NetObject):
 			#x = keras.layers.Permute((2,3,1,4))(in_im)
 			
 			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
-			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=64, dropout_rate=0.2,
 							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
 							activation='softmax', batchsize=32,input_tensor=in_im,
 							recurrent_filters=128)
@@ -1185,8 +1195,78 @@ class NetModel(NetObject):
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(x)
 			self.graph = Model(in_im, out)
+		elif self.model_type=='deeplab_rs':
+
+
+
+			d1=dilated_layer(in_im,16,1)
+			d2=dilated_layer(in_im,16,2)
+			d4=dilated_layer(in_im,16,4)
+			d8=dilated_layer(in_im,16,8)
+
+			pdc = keras.layers.concatenate([d1, d2, d4, d8], axis=4)
+			pdc = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(pdc)
+
+			d1=dilated_layer(pdc,32,1)
+			d2=dilated_layer(pdc,32,2)
+			d4=dilated_layer(pdc,32,4)
+
+			pdc = keras.layers.concatenate([d1, d2, d4], axis=4)
+			pdc = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(pdc)
+
+			d1=dilated_layer(pdc,64,1)
+			d2=dilated_layer(pdc,64,2)
+			pdc = keras.layers.concatenate([d1, d2], axis=4)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(pdc)
+			x = TimeDistributed(UpSampling2D(size=(4, 4)))(x)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		self.graph.summary(print_fn=model_summary_print)
+		elif self.model_type=='deeplab_rs_multiscale':
+
+			d1=dilated_layer(in_im,16,1)
+			d2=dilated_layer(in_im,16,2)
+			d4=dilated_layer(in_im,16,4)
+			d8=dilated_layer(in_im,16,8)
+
+			pdc1 = keras.layers.concatenate([d1, d2, d4, d8], axis=4)
+			pdc = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(pdc1)
+
+			d1=dilated_layer(pdc,32,1)
+			d2=dilated_layer(pdc,32,2)
+			d4=dilated_layer(pdc,32,4)
+
+			pdc2 = keras.layers.concatenate([d1, d2, d4], axis=4)
+			pdc = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(pdc2)
+
+			d1=dilated_layer(pdc,64,1)
+			d2=dilated_layer(pdc,64,2)
+			pdc = keras.layers.concatenate([d1, d2], axis=4)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(pdc)
+	
+			# Decoder V3+
+			x = TimeDistributed(UpSampling2D(size=(2, 2)))(x)
+			x2 = dilated_layer(pdc2,128,1,kernel_size=1)#Low level features
+			x= keras.layers.concatenate([x, x2], axis=4)
+			x= dilated_layer(x,64,1,kernel_size=3)
+			x = TimeDistributed(UpSampling2D(size=(2, 2)))(x)
+			
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+		self.graph = Model(in_im, out)
+		print(self.graph.summary(line_length=125))
+
+
+
+
+		with open('model_summary.txt','w') as fh:
+			self.graph.summary(line_length=125,print_fn=lambda x: fh.write(x+'\n'))
+		#self.graph.summary(print_fn=model_summary_print)
 	def compile(self, optimizer, loss='binary_crossentropy', metrics=['accuracy',metrics.categorical_accuracy],loss_weights=None):
 		#loss_weighted=weighted_categorical_crossentropy(loss_weights)
 		loss_weighted=weighted_categorical_crossentropy_ignoring_last_label(loss_weights)
