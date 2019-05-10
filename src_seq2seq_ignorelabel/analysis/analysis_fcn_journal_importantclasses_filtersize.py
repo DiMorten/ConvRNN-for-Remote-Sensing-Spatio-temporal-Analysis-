@@ -316,7 +316,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(30,85)
+			ax.set_ylim(30,70)
 			ax3.set_ylim(65,94)
 
 			ax.set_xticks(X+width/2)
@@ -382,7 +382,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	plt.show()
 
 dataset='cv'
-load_metrics=True
+load_metrics=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -447,20 +447,14 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	experiment_groups=[['prediction_deeplab_rs_multiscale_v3plus.npy',
-		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_lauras3.npy',
-		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
+	experiment_groups=[['prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
-		['prediction_deeplab_rs_multiscale_v3plus.npy',
-		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_lauras3.npy',
-		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy']]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
@@ -485,18 +479,16 @@ elif dataset=='lm':
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
 	experiment_groups=[[
-		'prediction_deeplab_rs_multiscale_v3plus.npy',
+		'prediction_deeplab_rs_multiscale_v3plus',
 		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_nowifi.npy',
 		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-		['prediction_deeplab_rs_multiscale_v3plus.npy',
+		['prediction_deeplab_rs_multiscale_v3plus',
 		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_nowifi.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']]
+
+
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode)

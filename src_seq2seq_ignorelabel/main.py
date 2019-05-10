@@ -865,7 +865,7 @@ class NetModel(NetObject):
 		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
 		weight_decay=1E-4
 		def dilated_layer(x,filter_size,dilation_rate=1, kernel_size=3):
-			x = TimeDistributed(Conv2D(filter_size, (3, 3), padding='same',
+			x = TimeDistributed(Conv2D(filter_size, kernel_size, padding='same',
 				dilation_rate=(dilation_rate, dilation_rate)))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
 							   beta_regularizer=l2(weight_decay))(x)
@@ -1017,8 +1017,8 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='FCN_ConvLSTM_seq2seq_bi_skip':
-			fs=32
-			#fs=16
+			#fs=32
+			fs=16
 			
 			e1 = TimeDistributed(Conv2D(fs, (3, 3), padding='same'))(in_im)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
@@ -1258,6 +1258,46 @@ class NetModel(NetObject):
 			
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 						 padding='same'))(x)
+		elif self.model_type=='deeplabv3plus':
+
+			e1 = dilated_layer(in_im,16,1)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
+			e1 = dilated_layer(e1,32,1)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
+
+			def im_pooling_layer(x,filter_size):
+				shape_before=tf.shape(x)
+				x=TimeDistributed(GlobalAveragePooling2D())(x)
+				x=tf.expand_dims(tf.expand_dims(x,2),2)
+				x=dilated_layer(x,filter_size,1,kernel_size=1)
+				x=TimeDistributed(Lambda(
+					lambda y: tf.compat.v1.image.resize(
+						y, shape_before[2:4],
+						method='bilinear',align_corners=True)))(x)
+				return x
+
+			dilAvg = im_pooling_layer(e1,64)
+			dil0 = dilated_layer(e1,64,1,kernel_size=1)
+			dil1 = dilated_layer(e1,64,2)
+			dil2 = dilated_layer(e1,64,4)
+			dil3 = dilated_layer(e1,64,8)
+
+			pdc = keras.layers.concatenate([dilAvg, dil0, dil1, dil2, dil3], axis=4)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(pdc)
+
+			# Decoder V3+
+			x = TimeDistributed(UpSampling2D(size=(2, 2)))(x)
+			x2 = dilated_layer(pdc2,128,1,kernel_size=1)#Low level features
+			x= keras.layers.concatenate([x, x2], axis=4)
+			x= dilated_layer(x,64,1,kernel_size=3)
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			out = TimeDistributed(UpSampling2D(size=(2, 2)))(x)
+			
+
+			self.graph = Model(in_im, out)
 		self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 
