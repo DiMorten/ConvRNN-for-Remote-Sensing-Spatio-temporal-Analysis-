@@ -28,7 +28,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 		class_list,class_count = np.unique(label_test,return_counts=True)
 		#print("Class unique before eliminating non important classes:",class_list,class_count)
 
-		class_count_min=10000
+		class_count_min=5000
 		for count,idx in zip(class_count,class_list):
 			if count<class_count_min:
 				predictions=predictions[label_test!=idx]
@@ -254,7 +254,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	#width=0.5
 	width=0.25
 	
-	colors=['b','y','c','m','r','r']
+	colors=['b','y','c','m','r','b','g']
 	#colors=['#7A9AAF','#293C4B','#FF8700']
 	#colors=['#4225AC','#1DBBB9','#FBFA17']
 	##colors=['b','#FBFA17','c']
@@ -355,6 +355,8 @@ def experiments_plot(metrics,experiment_list,dataset):
 	legends=('DeeplabRSConvLSTM','Deeplabv3ConvLSTM','BAtrousConvLSTM','BUnetConvLSTM','BDenseConvLSTM')
 
 	legends=('DeeplabRSDecoderConvLSTM','DeeplabRSConvLSTM','Deeplabv3ConvLSTM','BAtrousConvLSTM','BUnetConvLSTM','BDenseConvLSTM')
+	
+	legends=('DeeplabV3+','DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
 
 	ax.legend(tuple(exp_handler), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=len(legends))
 	ax2.legend(tuple(exp_handler2), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=len(legends))
@@ -381,7 +383,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	
 	plt.show()
 
-dataset='cv'
+dataset='lm'
 load_metrics=True
 #mode='global'
 mode='each_date'
@@ -447,14 +449,16 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	experiment_groups=[['prediction_deeplab_rs_multiscale_v3plus.npy',
+	experiment_groups=[['prediction_deeplabv3plus_v3plus2.npy',
+		'prediction_deeplab_rs_multiscale_v3plus2.npy',
 		'prediction_deeplab_rs_nowifi.npy',
 		'prediction_deeplabv3_lauras3.npy',
 		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
-		['prediction_deeplab_rs_multiscale_v3plus.npy',
+		['prediction_deeplabv3plus_v3plus2.npy',
+		'prediction_deeplab_rs_multiscale_v3plus2.npy',
 		'prediction_deeplab_rs_nowifi.npy',
 		'prediction_deeplabv3_lauras3.npy',
 		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
@@ -484,18 +488,19 @@ elif dataset=='lm':
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
-	experiment_groups=[[
-		'prediction_deeplab_rs_multiscale_v3plus.npy',
+	experiment_groups=[['prediction_deeplabv3plus_v3plus2.npy',
+		'prediction_deeplab_rs_multiscale_v3plus2.npy',
 		'prediction_deeplab_rs_nowifi.npy',
 		'prediction_deeplabv3_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_nowifi.npy',
+		'prediction_pyramid_dilated_bconvlstm_v3plus2.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus2.npy', #nowifi
 		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-		['prediction_deeplab_rs_multiscale_v3plus.npy',
+		['prediction_deeplabv3plus_v3plus2.npy',
+		'prediction_deeplab_rs_multiscale_v3plus2.npy',
 		'prediction_deeplab_rs_nowifi.npy',
 		'prediction_deeplabv3_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_nowifi.npy',
+		'prediction_pyramid_dilated_bconvlstm_v3plus2.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,

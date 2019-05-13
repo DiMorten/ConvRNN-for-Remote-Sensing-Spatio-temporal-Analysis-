@@ -71,12 +71,14 @@ KERAS_BACKEND=tensorflow
 
 id='v3plus2'
 
-dataset='cv'
-. patches_extract.sh $dataset
-. experiment_automation.sh $id 'deeplabv3plus' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'deeplab_rs_multiscale' $dataset  # gonna test balancing after replication
+#dataset='cv'
+#. patches_extract.sh $dataset
+#. experiment_automation.sh $id 'deeplabv3plus' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'deeplab_rs_multiscale' $dataset  # gonna test balancing after replication
 
 dataset='lm'
 . patches_extract.sh $dataset
-. experiment_automation.sh $id 'deeplabv3plus' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'deeplab_rs_multiscale' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'deeplabv3plus' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'deeplab_rs_multiscale' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'pyramid_dilated_bconvlstm' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'FCN_ConvLSTM_seq2seq_bi_skip' $dataset  # gonna test balancing after replication
