@@ -22,18 +22,34 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	label_test=np.reshape(label_test,-1)
 	predictions=predictions[label_test<class_n]
 	label_test=label_test[label_test<class_n]
-	small_classes_ignore=False
+	small_classes_ignore=True
 	if small_classes_ignore==True:
 		# Eliminate non important classes
 		class_list,class_count = np.unique(label_test,return_counts=True)
-		#print("Class unique before eliminating non important classes:",class_list,class_count)
+		print("Class unique before eliminating non important classes:",class_list,class_count)
 
-		class_count_min=5000
+		class_count_min=100000
 		for count,idx in zip(class_count,class_list):
 			if count<class_count_min:
-				predictions=predictions[label_test!=idx]
-				label_test=label_test[label_test!=idx]
-		#print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
+				predictions[predictions==idx]=20
+				label_test[label_test==idx]=20
+
+		#print("a",int(np.where(class_list==idx)[0]))
+		for idx in range(class_n):
+			if idx in class_list:
+				index=int(np.where(class_list==idx)[0])
+				#print("b",index)
+				if class_count[index]<class_count_min:
+					predictions[predictions==idx]=20
+					label_test[label_test==idx]=20
+			else:
+				predictions[predictions==idx]=20
+				label_test[label_test==idx]=20
+
+
+		print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
+		#print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
+
 
 	if debug>0:
 		print("Predictions",predictions.shape)
@@ -48,7 +64,7 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1):
 	metrics['f1_score']=f1_score(label_test,predictions,average='macro')
 	metrics['overall_acc']=accuracy_score(label_test,predictions)
 	confusion_matrix_=confusion_matrix(label_test,predictions)
-	#print(confusion_matrix_)
+	print(confusion_matrix_)
 	metrics['per_class_acc']=(confusion_matrix_.astype('float') / confusion_matrix_.sum(axis=1)[:, np.newaxis]).diagonal()
 	acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
 	acc=acc[~np.isnan(acc)]
@@ -300,8 +316,8 @@ def experiments_plot(metrics,experiment_list,dataset):
 			xticklabels=['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(40,85)
-			ax3.set_ylim(34,100)
+			ax.set_ylim(75,100)
+			ax3.set_ylim(70,100)
 
 			ax.set_xticks(X+width/2)
 			ax.set_xticklabels(xticklabels)
@@ -316,7 +332,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(30,85)
+			ax.set_ylim(60,90)
 			ax3.set_ylim(65,94)
 
 			ax.set_xticks(X+width/2)
@@ -356,7 +372,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 	legends=('DeeplabRSDecoderConvLSTM','DeeplabRSConvLSTM','Deeplabv3ConvLSTM','BAtrousConvLSTM','BUnetConvLSTM','BDenseConvLSTM')
 	
-	#legends=('DeeplabV3+','DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
+#	legends=('DeeplabV3+','DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
 	legends=('DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
 
 	ax.legend(tuple(exp_handler), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=len(legends))
@@ -370,9 +386,9 @@ def experiments_plot(metrics,experiment_list,dataset):
 	#fig.savefig("f1_score_"+dataset+".eps",format="eps",dpi=300)
 	#fig2.savefig("average_acc_"+dataset+".eps",format="eps",dpi=300)
 	#fig3.savefig("overall_acc_"+dataset+".eps",format="eps",dpi=300)
-	fig.savefig("f1_score_importantclasses_"+dataset+".png",dpi=300)
-	fig2.savefig("average_acc_importantclasses_"+dataset+".png",dpi=300)
-	fig3.savefig("overall_acc_importantclasses_"+dataset+".png",dpi=300)
+	fig.savefig("f1_score_importantclasses2_"+dataset+".png",dpi=300)
+	fig2.savefig("average_acc_importantclasses2_"+dataset+".png",dpi=300)
+	fig3.savefig("overall_acc_importantclasses2_"+dataset+".png",dpi=300)
 
 	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
 	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
@@ -385,7 +401,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	plt.show()
 
 dataset='cv'
-load_metrics=False
+load_metrics=True
 #mode='global'
 mode='each_date'
 if dataset=='cv':

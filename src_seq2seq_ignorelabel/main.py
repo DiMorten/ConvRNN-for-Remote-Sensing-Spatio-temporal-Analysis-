@@ -18,7 +18,7 @@ from keras.models import *
 from keras.layers import *
 from keras.optimizers import *
 from keras import metrics
-
+import sys
 import glob
 
 from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classification_report
@@ -33,6 +33,7 @@ from keras.models import load_model
 from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D
 from keras.utils.vis_utils import plot_model
 from keras.regularizers import l2
+import time
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -723,7 +724,7 @@ class Dataset(NetObject):
 class NetModel(NetObject):
 	def __init__(self, batch_size_train=32, batch_size_test=200, epochs=30000, 
 		patience=10, eval_mode='metrics', val_set=True,
-		model_type='DenseNet', *args, **kwargs):
+		model_type='DenseNet', time_measure=False, *args, **kwargs):
 
 		super().__init__(*args, **kwargs)
 		if self.debug >= 1:
@@ -749,6 +750,7 @@ class NetModel(NetObject):
 			text_file.write("epoch,oa,aa,f1,class_acc\n")
 
 		self.model_save=True
+		self.time_measure=time_measure
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
 		pipe = keras.layers.BatchNormalization(axis=3)(pipe)
@@ -1262,8 +1264,8 @@ class NetModel(NetObject):
 
 			e1 = dilated_layer(in_im,16,1)
 			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
-			e1 = dilated_layer(e1,32,1)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
+			p1 = dilated_layer(e1,32,1)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
 
 			def im_pooling_layer(x,filter_size):
 				shape_before=tf.shape(x)
@@ -1289,7 +1291,7 @@ class NetModel(NetObject):
 
 			# Decoder V3+
 			x = TimeDistributed(UpSampling2D(size=(2, 2)))(x)
-			x2 = dilated_layer(pdc2,128,1,kernel_size=1)#Low level features
+			x2 = dilated_layer(p1,128,1,kernel_size=1)#Low level features
 			x= keras.layers.concatenate([x, x2], axis=4)
 			x= dilated_layer(x,64,1,kernel_size=3)
 			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
@@ -1474,11 +1476,15 @@ class NetModel(NetObject):
 
 				batch['train']['in'] = data.patches['train']['in'][idx0:idx1]
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
-
+				if self.time_measure==True:
+					start_time=time.time()
 				self.metrics['train']['loss'] += self.graph.train_on_batch(
 					batch['train']['in'].astype(np.float32), 
 					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-
+				if self.time_measure==True:
+					batch_time=time.time()-start_time
+					print(batch_time)
+					sys.exit('Batch time:')
 			# Average epoch loss
 			self.metrics['train']['loss'] /= self.batch['train']['n']
 
@@ -1639,7 +1645,7 @@ flag = {"data_create": 2, "label_one_hot": True}
 if __name__ == '__main__':
 	#
 	
-	
+	time_measure=True
 	#if data.dataset=='seq2':
 	#	args.class_n=10
 
@@ -1688,7 +1694,7 @@ if __name__ == '__main__':
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
 					 patience=args.patience,t_len=args.t_len,class_n=args.class_n,path=args.path,
-					 val_set=val_set,model_type=args.model_type)
+					 val_set=val_set,model_type=args.model_type, time_measure=time_measure)
 	model.class_n=data.class_n-1 # Model is designed without background class
 	deb.prints(data.class_n)
 	model.build()
@@ -1700,7 +1706,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
+	balancing=False
 	if balancing==True:
 
 		
