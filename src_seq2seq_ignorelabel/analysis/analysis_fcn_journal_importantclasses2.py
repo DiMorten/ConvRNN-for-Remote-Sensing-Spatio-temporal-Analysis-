@@ -200,7 +200,8 @@ def experiments_analyze(dataset,experiment_list,mode='each_date'):
 			mode=mode,debug=0))
 	return experiment_metrics
 
-def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
+def experiment_groups_analyze(dataset,experiment_group,
+	mode='each_date',exp_id=1):
 	save=True
 	if save==True:	
 
@@ -218,9 +219,11 @@ def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 	#	for model_id in range(len(experiment_metrics[0])):
 	#		for date_id in range(len(experiment_metrics[0][model_id]):
 
-		np.save('experiment_metrics.npy',experiment_metrics)
+		np.save('experiment_metrics'+str(exp_id)+'.npy',
+			experiment_metrics)
 	else:
-		experiment_metrics=np.load('experiment_metrics.npy')
+		experiment_metrics=np.load(
+			'experiment_metrics'+str(exp_id)+'.npy')
 	metrics={}
 	total_metrics=[]
 
@@ -401,7 +404,7 @@ def experiments_plot(metrics,experiment_list,dataset):
 	plt.show()
 
 dataset='cv'
-load_metrics=True
+load_metrics=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -466,22 +469,35 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
-		'prediction_deeplab_rs_multiscale_v3plus.npy',
-		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_lauras3.npy',
-		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
-##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
-		[#'prediction_deeplabv3plus_v3plus2.npy',
-		'prediction_deeplab_rs_multiscale_v3plus.npy',
-		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_lauras3.npy',
-		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
-##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
+	exp_id=1
+	if exp_id==1:
+		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_deeplab_rs_multiscale_v3plus.npy',
+			'prediction_deeplab_rs_nowifi.npy',
+			'prediction_deeplabv3_lauras3.npy',
+			'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
+			'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
+	##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
+			[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_deeplab_rs_multiscale_v3plus.npy',
+			'prediction_deeplab_rs_nowifi.npy',
+			'prediction_deeplabv3_lauras3.npy',
+			'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
+			'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
+	##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
+
+	elif exp_id==2:
+		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_BUnetConvLSTM_2convins.npy',
+			'prediction_BAtrousConvLSTM_2convins.npy',
+			'prediction_BUnetAtrousConvLSTM_2convins2.npy'],
+			[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_BUnetConvLSTM_2convins.npy',
+			'prediction_BAtrousConvLSTM_2convins.npy',
+			'prediction_BUnetAtrousConvLSTM_2convins2.npy'],
+			]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
@@ -521,7 +537,7 @@ elif dataset=='lm':
 		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
-		mode=mode)
+		mode=mode,exp_id=exp_id)
 	np.save("experiment_metrics_"+dataset+"_"+file_id+".npy",experiment_metrics)
 
 else:
