@@ -1396,6 +1396,36 @@ class NetModel(NetObject):
 			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		elif self.model_type=='BUnetAtrousConvLSTM_v3p':
+
+			fs=16
+			x=dilated_layer(in_im,fs)
+			d1=dilated_layer(in_im,16,1)
+			d2=dilated_layer(in_im,16,2)
+			d4=dilated_layer(in_im,16,4)
+			d8=dilated_layer(in_im,16,8)
+
+			pdc = keras.layers.concatenate([d1, d2, d4, d8], axis=4)
+			pdc = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(pdc)
+
+			d1=dilated_layer(pdc,32,1)
+			d2=dilated_layer(pdc,32,2)
+			d4=dilated_layer(pdc,32,4)
+
+			pdc = keras.layers.concatenate([d1, d2, d4], axis=4)
+			pdc = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(pdc)
+
+			d1=dilated_layer(pdc,64,1)
+			d2=dilated_layer(pdc,64,2)
+			pdc = keras.layers.concatenate([d1, d2], axis=4)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(pdc)
+			x = TimeDistributed(UpSampling2D(size=(4, 4)))(x)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 

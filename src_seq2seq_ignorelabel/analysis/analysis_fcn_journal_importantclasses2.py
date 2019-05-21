@@ -15,14 +15,13 @@ import pandas as pd
 file_id="importantclasses"
 #====================================
 def labels_predictions_filter_transform(label_test,predictions,class_n,
-		debug=1):
+		debug=1,small_classes_ignore=True):
 	predictions=predictions.argmax(axis=np.ndim(predictions)-1)
 	predictions=np.reshape(predictions,-1)
 	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
 	label_test=np.reshape(label_test,-1)
 	predictions=predictions[label_test<class_n]
 	label_test=label_test[label_test<class_n]
-	small_classes_ignore=False
 	if small_classes_ignore==True:
 		# Eliminate non important classes
 		class_list,class_count = np.unique(label_test,return_counts=True)
@@ -147,7 +146,7 @@ prediction_path=path+'prediction.npy'
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
 
 # =========seq2seq 
-def experiment_analyze(dataset='cv',
+def experiment_analyze(small_classes_ignore,dataset='cv',
 		prediction_filename='prediction_DenseNetTimeDistributed_blockgoer.npy',
 		mode='each_date',debug=1):
 	path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/'+dataset+'/'
@@ -169,7 +168,7 @@ def experiment_analyze(dataset='cv',
 
 			label_test_t,predictions_t = labels_predictions_filter_transform(
 				label_test_t, predictions_t, class_n=class_n,
-				debug=debug)
+				debug=debug,small_classes_ignore=small_classes_ignore)
 			metrics = metrics_get(label_test_t, predictions_t,
 				only_basics=True, debug=debug)	
 			metrics_t['f1_score'].append(metrics['f1_score'])
@@ -201,7 +200,7 @@ def experiments_analyze(dataset,experiment_list,mode='each_date'):
 	return experiment_metrics
 
 def experiment_groups_analyze(dataset,experiment_group,
-	mode='each_date',exp_id=1):
+	small_classes_ignore,mode='each_date',exp_id=1):
 	save=True
 	if save==True:	
 
@@ -213,7 +212,8 @@ def experiment_groups_analyze(dataset,experiment_group,
 				group_metrics.append(experiment_analyze(
 					dataset=dataset,
 					prediction_filename=experiment,
-					mode=mode,debug=0))
+					mode=mode,debug=0,
+					small_classes_ignore=small_classes_ignore))
 			experiment_metrics.append(group_metrics)
 
 	#	for model_id in range(len(experiment_metrics[0])):
@@ -335,7 +335,10 @@ def experiments_plot(metrics,experiment_list,dataset):
 
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
-			ax.set_ylim(60,90)
+			if small_classes_ignore==True:
+				ax.set_ylim(60,90)
+			else:
+				ax.set_ylim(40,80)	
 			ax3.set_ylim(65,94)
 
 			ax.set_xticks(X+width/2)
@@ -404,7 +407,8 @@ def experiments_plot(metrics,experiment_list,dataset):
 	plt.show()
 
 dataset='cv'
-load_metrics=False
+load_metrics=True
+small_classes_ignore=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -537,7 +541,7 @@ elif dataset=='lm':
 		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
-		mode=mode,exp_id=exp_id)
+		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)
 	np.save("experiment_metrics_"+dataset+"_"+file_id+".npy",experiment_metrics)
 
 else:
