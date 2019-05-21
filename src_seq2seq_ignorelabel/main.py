@@ -1323,6 +1323,35 @@ class NetModel(NetObject):
 			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='UnetTimeDistributed':
+
+
+			#fs=32
+			fs=16
+
+			p1=dilated_layer(in_im,fs)			
+			p1=dilated_layer(p1,fs)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+			p2=dilated_layer(e1,fs*2)
+			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+			p3=dilated_layer(e2,fs*4)
+			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
+
+			#x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			#        padding="same"),merge_mode='concat')(e3)
+
+			d3 = transpose_layer(e3,fs*4)
+			d3 = keras.layers.concatenate([d3, p3], axis=4)
+			d2 = transpose_layer(d3,fs*4)
+			d2 = keras.layers.concatenate([d2, p2], axis=4)
+			d1 = transpose_layer(d2,fs*2)
+			d1 = keras.layers.concatenate([d1, p1], axis=4)
+			out=dilated_layer(d1,fs)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+			                            padding='same'))(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+
 		elif self.model_type=='BAtrousConvLSTM':
 
 			#fs=32

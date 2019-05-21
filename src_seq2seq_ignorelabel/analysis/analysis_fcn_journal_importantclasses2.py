@@ -22,7 +22,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	label_test=np.reshape(label_test,-1)
 	predictions=predictions[label_test<class_n]
 	label_test=label_test[label_test<class_n]
-	small_classes_ignore=True
+	small_classes_ignore=False
 	if small_classes_ignore==True:
 		# Eliminate non important classes
 		class_list,class_count = np.unique(label_test,return_counts=True)
@@ -469,7 +469,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=1
+	exp_id=2
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus.npy',

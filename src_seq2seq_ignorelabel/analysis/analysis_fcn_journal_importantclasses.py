@@ -453,7 +453,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=1
+	exp_id=2
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus.npy',
