@@ -1360,7 +1360,7 @@ class NetModel(NetObject):
 			#x=dilated_layer(in_im,fs)
 			x=dilated_layer(in_im,fs)
 			x=dilated_layer(x,fs)
-			x=spatial_pyramid_pooling(x,fs*4,max_rate=2)
+			x=spatial_pyramid_pooling(x,fs*4,max_rate=8)
 			
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 			        padding="same"),merge_mode='concat')(x)

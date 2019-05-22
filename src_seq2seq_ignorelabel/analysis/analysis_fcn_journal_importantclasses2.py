@@ -255,7 +255,7 @@ def experiment_groups_analyze(dataset,experiment_group,
 	print(total_metrics)
 	return total_metrics
 
-def experiments_plot(metrics,experiment_list,dataset):
+def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 
 
 
@@ -379,7 +379,10 @@ def experiments_plot(metrics,experiment_list,dataset):
 	legends=('DeeplabRSDecoderConvLSTM','DeeplabRSConvLSTM','Deeplabv3ConvLSTM','BAtrousConvLSTM','BUnetConvLSTM','BDenseConvLSTM')
 	
 #	legends=('DeeplabV3+','DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
-	legends=('DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
+	if experiment_id==1:
+		legends=('DeeplabRSDecoder','DeeplabRS','Deeplabv3','BAtrous','BUnet','BDense')
+	elif experiment_id==2:
+		legends=('BConvLSTM','UnetBConvLSTM','AtrousBConvLSTM','UnetAtrousBConvLSTM','FCNAtrousBConvLSTM')
 
 	ax.legend(tuple(exp_handler), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=len(legends))
 	ax2.legend(tuple(exp_handler2), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=len(legends))
@@ -494,13 +497,17 @@ if dataset=='cv':
 
 	elif exp_id==2:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			'prediction_BUnetConvLSTM_2convins.npy',
 			'prediction_BAtrousConvLSTM_2convins.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins2.npy'],
+			'prediction_BUnetAtrousConvLSTM_2convins2.npy',
+			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'],
 			[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			'prediction_BUnetConvLSTM_2convins.npy',
 			'prediction_BAtrousConvLSTM_2convins.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins2.npy'],
+			'prediction_BUnetAtrousConvLSTM_2convins2.npy',
+			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'],
 			]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
@@ -551,7 +558,7 @@ else:
 
 
 if mode=='each_date':
-	experiments_plot(experiment_metrics,experiment_groups[0],dataset)
+	experiments_plot(experiment_metrics,experiment_groups[0],dataset,experiment_id=exp_id)
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
 
