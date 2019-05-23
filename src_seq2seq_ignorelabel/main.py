@@ -1375,7 +1375,7 @@ class NetModel(NetObject):
 			#fs=32
 			fs=16
 			x=dilated_layer(in_im,fs)
-			p1=spatial_pyramid_pooling(in_im,fs,max_rate=8)
+			p1=spatial_pyramid_pooling(x,fs,max_rate=8)
 			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
 			p2=spatial_pyramid_pooling(e1,fs*2,max_rate=4)
 			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)

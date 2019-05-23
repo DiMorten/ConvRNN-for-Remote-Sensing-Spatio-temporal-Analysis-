@@ -25,7 +25,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	if small_classes_ignore==True:
 		# Eliminate non important classes
 		class_list,class_count = np.unique(label_test,return_counts=True)
-		print("Class unique before eliminating non important classes:",class_list,class_count)
+		if debug>=2: print("Class unique before eliminating non important classes:",class_list,class_count)
 
 		class_count_min=100000
 		for count,idx in zip(class_count,class_list):
@@ -46,7 +46,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 				label_test[label_test==idx]=20
 
 
-		print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
+		if debug>=2: print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
 		#print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
 
 
@@ -63,7 +63,7 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1):
 	metrics['f1_score']=f1_score(label_test,predictions,average='macro')
 	metrics['overall_acc']=accuracy_score(label_test,predictions)
 	confusion_matrix_=confusion_matrix(label_test,predictions)
-	print(confusion_matrix_)
+	#print(confusion_matrix_)
 	metrics['per_class_acc']=(confusion_matrix_.astype('float') / confusion_matrix_.sum(axis=1)[:, np.newaxis]).diagonal()
 	acc=confusion_matrix_.diagonal()/np.sum(confusion_matrix_,axis=1)
 	acc=acc[~np.isnan(acc)]
@@ -291,13 +291,16 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 	fig2.subplots_adjust(bottom=0.2)
 	fig3.subplots_adjust(bottom=0.2)
 	#metrics=metrics[]
-
+	print("Plotting")
 	for experiment in experiment_list:
-		print("experiment",experiment)
+
+		#print("experiment",experiment)
 		print(exp_id)
 		metrics[exp_id]['f1_score']=np.transpose(np.asarray(metrics[exp_id]['f1_score']))*100
 		metrics[exp_id]['overall_acc']=np.transpose(np.asarray(metrics[exp_id]['overall_acc']))*100
 		metrics[exp_id]['average_acc']=np.transpose(np.asarray(metrics[exp_id]['average_acc']))*100
+		
+		print("Experiment:{}, dataset:{}. Avg f1:{}".format(experiment,dataset,np.average(metrics[exp_id]['f1_score'])))
 
 		if dataset=='cv':
 			
@@ -336,7 +339,7 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
 			if small_classes_ignore==True:
-				ax.set_ylim(60,90)
+				ax.set_ylim(65,87)
 			else:
 				ax.set_ylim(40,80)	
 			ax3.set_ylim(65,94)
@@ -410,8 +413,8 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 	plt.show()
 
 dataset='cv'
-load_metrics=True
-small_classes_ignore=False
+load_metrics=False
+small_classes_ignore=True
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -498,15 +501,15 @@ if dataset=='cv':
 	elif exp_id==2:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_BUnetConvLSTM_2convins.npy',
+			'prediction_BUnetConvLSTM_2convins4.npy',
 			'prediction_BAtrousConvLSTM_2convins.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins2.npy',
+			'prediction_BUnetAtrousConvLSTM_2convins4_old.npy',
 			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'],
 			[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			'prediction_BUnetConvLSTM_2convins.npy',
 			'prediction_BAtrousConvLSTM_2convins.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins2.npy',
+			'prediction_BUnetAtrousConvLSTM_2convins4_old.npy',
 			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'],
 			]
 
