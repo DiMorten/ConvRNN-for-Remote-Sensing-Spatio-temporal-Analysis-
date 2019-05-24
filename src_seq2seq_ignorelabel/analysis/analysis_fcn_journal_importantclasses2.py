@@ -15,7 +15,8 @@ import pandas as pd
 file_id="importantclasses"
 #====================================
 def labels_predictions_filter_transform(label_test,predictions,class_n,
-		debug=1,small_classes_ignore=True):
+		debug=1,small_classes_ignore=True,
+		important_classes=None,dataset='cv'):
 	predictions=predictions.argmax(axis=np.ndim(predictions)-1)
 	predictions=np.reshape(predictions,-1)
 	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
@@ -26,28 +27,33 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 		# Eliminate non important classes
 		class_list,class_count = np.unique(label_test,return_counts=True)
 		if debug>=2: print("Class unique before eliminating non important classes:",class_list,class_count)
+		if important_classes!=None:
 
-		class_count_min=100000
-		for count,idx in zip(class_count,class_list):
-			if count<class_count_min:
-				predictions[predictions==idx]=20
-				label_test[label_test==idx]=20
-
-		#print("a",int(np.where(class_list==idx)[0]))
-		for idx in range(class_n):
-			if idx in class_list:
-				index=int(np.where(class_list==idx)[0])
-				#print("b",index)
-				if class_count[index]<class_count_min:
+			for idx in range(class_n):
+				if idx in important_classes:
+					pass
+				else:
 					predictions[predictions==idx]=20
 					label_test[label_test==idx]=20
-			else:
-				predictions[predictions==idx]=20
-				label_test[label_test==idx]=20
+
+		else:
+			class_count_min=100000
+			print("Class count min:",class_count_min)
+
+			for idx in range(class_n):
+				if idx in class_list:
+					index=int(np.where(class_list==idx)[0])
+					#print("b",index)
+					if class_count[index]<class_count_min:
+						predictions[predictions==idx]=20
+						label_test[label_test==idx]=20
+				else:
+					predictions[predictions==idx]=20
+					label_test[label_test==idx]=20
 
 
 		if debug>=2: print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
-		#print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
+		print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
 
 
 	if debug>0:
@@ -96,48 +102,6 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1):
 	return metrics
 
 
-#===== normy3
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy/fcn/seq1/'
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy/fcn/seq2/'
-
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/hn_data/normy/fcn_16/'
-
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/hn_data/normy/fcn_8/'
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/hn_data/normy/fcn_8/'
-
-
-#======== normy3_check
-
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy3_check/fcn/seq1/'
-#=========== normy3_check2
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/hn_data/normy3_check2/fcn/'
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy3_check2/fcn/seq2/'
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy3_check2/fcn/seq1/'
-
-# gold
-
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy3_check2/fcn/seq2/gold/'
-# ====== normy3B
-
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy3B/fcn/seq1/'
-#path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/normy3B/fcn/seq2/'
-
-
-path='/home/lvc/Jorg/sbsr/fcn_model/keras_time_semantic_fcn/'
-# ======= convlstm playground
-
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/convlstm_playground/fcn_original500/'
-path='/home/lvc/Jorg/deep_learning/LSTM-Final-Project/cv_data/convlstm_playground/fcn_original/'
-
-# === tranfer
-
-path='/home/lvc/Jorg/igarss/fcn_transfer_learning_for_RS/results/transfer_fcn_seq2_to_seq1/'
-# === normy3 check
-
-path='/home/lvc/Jorg/igarss/fcn_transfer_learning_for_RS/results/normy3_check/seq1/fcn/'
-
-
-
 # ======== ConvRNN
 
 path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/densenet/'
@@ -162,13 +126,20 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 	if mode=='each_date':
 		metrics_t={'f1_score':[],'overall_acc':[],
 			'average_acc':[]}
+
+		# if dataset=='cv':
+		# 	important_classes=[]
+		# 	for date in range(14):
+		# 		if date<=7:
+		# 			date_important_classes=[0,6,8]
 		for t in range(label_test.shape[1]):
 			predictions_t = predictions[:,t,:,:,:]
 			label_test_t = label_test[:,t,:,:,:]
 
 			label_test_t,predictions_t = labels_predictions_filter_transform(
 				label_test_t, predictions_t, class_n=class_n,
-				debug=debug,small_classes_ignore=small_classes_ignore)
+				debug=debug,small_classes_ignore=small_classes_ignore,
+				important_classes=None)
 			metrics = metrics_get(label_test_t, predictions_t,
 				only_basics=True, debug=debug)	
 			metrics_t['f1_score'].append(metrics['f1_score'])
@@ -233,7 +204,7 @@ def experiment_groups_analyze(dataset,experiment_group,
 		print(len(experiment_metrics[0]))
 		print(experiment_metrics[0][0])
 		print(experiment_metrics[0][0]['f1_score'])
-		print(experiment_metrics[1][0]['f1_score'])
+		#print(experiment_metrics[1][0]['f1_score'])
 
 		print("exp_id",exp_id)		
 		metrics['f1_score']=np.average(np.asarray(
@@ -300,7 +271,11 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 		metrics[exp_id]['overall_acc']=np.transpose(np.asarray(metrics[exp_id]['overall_acc']))*100
 		metrics[exp_id]['average_acc']=np.transpose(np.asarray(metrics[exp_id]['average_acc']))*100
 		
-		print("Experiment:{}, dataset:{}. Avg f1:{}".format(experiment,dataset,np.average(metrics[exp_id]['f1_score'])))
+		print("Experiment:{}, dataset:{}. Avg F1:{}. Avg OA:{}. Avg AA:{}".format(
+			experiment,dataset,
+			np.average(metrics[exp_id]['f1_score']),
+			np.average(metrics[exp_id]['overall_acc']),
+			np.average(metrics[exp_id]['average_acc'])))
 
 		if dataset=='cv':
 			
@@ -414,7 +389,7 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 
 dataset='cv'
 load_metrics=False
-small_classes_ignore=True
+small_classes_ignore=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -479,7 +454,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=2
+	exp_id=1
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus.npy',
@@ -488,30 +463,23 @@ if dataset=='cv':
 			'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
 			'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 	##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],
-			[#'prediction_deeplabv3plus_v3plus2.npy',
-			'prediction_deeplab_rs_multiscale_v3plus.npy',
-			'prediction_deeplab_rs_nowifi.npy',
-			'prediction_deeplabv3_lauras3.npy',
-			'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
-			'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
-	##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
+	# 		[#'prediction_deeplabv3plus_v3plus2.npy',
+	# 		'prediction_deeplab_rs_multiscale_v3plus.npy',
+	# 		'prediction_deeplab_rs_nowifi.npy',
+	# 		'prediction_deeplabv3_lauras3.npy',
+	# 		'prediction_pyramid_dilated_bconvlstm_lauras2.npy',
+	# 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
+	# ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+	# 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 
 	elif exp_id==2:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			'prediction_BUnetConvLSTM_2convins4.npy',
 			'prediction_BAtrousConvLSTM_2convins.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins4_old.npy',
-			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'],
-			[#'prediction_deeplabv3plus_v3plus2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_BUnetConvLSTM_2convins.npy',
-			'prediction_BAtrousConvLSTM_2convins.npy',
-			'prediction_BUnetAtrousConvLSTM_2convins4_old.npy',
-			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'],
-			]
+			'prediction_BUnetAtrousConvLSTM_2convins4.npy',
+			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy']]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
