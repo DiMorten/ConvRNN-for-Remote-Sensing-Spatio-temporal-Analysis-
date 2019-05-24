@@ -1580,6 +1580,7 @@ class NetModel(NetObject):
 
 		#data.im_reconstruct(subset='test',mode='label')
 		#for epoch in [0,1]:
+		init_time=time.time()
 		#==============================START TRAIN/TEST LOOP============================#
 		for epoch in range(self.epochs):
 
@@ -1715,20 +1716,21 @@ class NetModel(NetObject):
 			if self.early_stop["signal"]==True:
 				self.early_stop['best_predictions']=data.patches['test']['prediction']
 				print("EARLY STOP EPOCH",epoch,metrics)
+				print("Training time",time.time()-init_time)
 				np.save("prediction.npy",self.early_stop['best_predictions'])
 				np.save("labels.npy",data.patches['test']['label'])
 				break
 				
 			# Check early stop and store results if they are the best
-			if epoch % 5 == 0:
-				print("Writing to file...")
-				for i in range(len(txt['test']['metrics'])):
+			#if epoch % 5 == 0:
+			#	print("Writing to file...")
+				#for i in range(len(txt['test']['metrics'])):
 
-					data.metrics_write_to_txt(txt['test']['metrics'][i],np.squeeze(txt['test']['loss'][i]),
-						txt['test']['epoch'][i],path=self.report['best']['text_history_path'])
-				txt['test']['metrics']=[]
-				txt['test']['loss']=[]
-				txt['test']['epoch']=[]
+				#	data.metrics_write_to_txt(txt['test']['metrics'][i],np.squeeze(txt['test']['loss'][i]),
+				#		txt['test']['epoch'][i],path=self.report['best']['text_history_path'])
+			#	txt['test']['metrics']=[]
+			#	txt['test']['loss']=[]
+			#	txt['test']['epoch']=[]
 				#self.graph.save('my_model.h5')
 
 			else:
