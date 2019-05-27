@@ -31,23 +31,29 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 		if dataset=='cv':
 			important_classes_idx=[0,1,2]
 		elif dataset=='lm':
-			important_classes_idx=[0,1,2]
-		if important_classes!=None:
+			important_classes_idx=[0,1,2,5,6]
 
+		mode=2
+		if mode==1:
 			for idx in range(class_n):
-				if idx in important_classes:
-					pass
+				if idx in important_classes_idx and idx in class_list:
+					index=int(np.where(class_list==idx)[0])
+					if class_count[index]<15000:
+						predictions[predictions==idx]=20
+						label_test[label_test==idx]=20
 				else:
 					predictions[predictions==idx]=20
 					label_test[label_test==idx]=20
-
-		else:
+		elif mode==2:
 			class_count_min=100000
-			print("Class count min:",class_count_min)
+			important_classes_class_count_min=15000
+			#important_classes_class_count_min=1
+
+			#print("Class count min:",class_count_min)
 
 			for idx in range(class_n):
 				if idx in class_list:
-					class_count_min_idx = 15000 if idx in important_classes_idx else class_count_min
+					class_count_min_idx = important_classes_class_count_min if idx in important_classes_idx else class_count_min
 					index=int(np.where(class_list==idx)[0])
 					#print("b",index)
 					if class_count[index]<class_count_min_idx:
@@ -307,7 +313,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 			ax.set_ylim(75,100)
 			ax3.set_ylim(70,100)
 			if small_classes_ignore==True:
-				ax.set_ylim(75,100)
+				ax.set_ylim(60,100)
 			else:
 				ax.set_ylim(35,85)
 			ax.set_xticks(X+width/2)
@@ -324,7 +330,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
 			if small_classes_ignore==True:
-				ax.set_ylim(65,87)
+				ax.set_ylim(60,87)
 			else:
 				ax.set_ylim(40,80)	
 			ax3.set_ylim(65,94)
@@ -401,7 +407,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 	
 	plt.show()
 
-dataset='lm'
+dataset='cv'
 load_metrics=False
 small_classes_ignore=True
 #mode='global'
