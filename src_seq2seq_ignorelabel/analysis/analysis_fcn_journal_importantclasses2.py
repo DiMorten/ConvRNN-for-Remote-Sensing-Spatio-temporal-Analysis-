@@ -26,7 +26,12 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 	if small_classes_ignore==True:
 		# Eliminate non important classes
 		class_list,class_count = np.unique(label_test,return_counts=True)
-		if debug>=2: print("Class unique before eliminating non important classes:",class_list,class_count)
+		if debug>=0: print("Class unique before eliminating non important classes:",class_list,class_count)
+		
+		if dataset=='cv':
+			important_classes_idx=[0,1,2]
+		elif dataset=='lm':
+			important_classes_idx=[0,1,2]
 		if important_classes!=None:
 
 			for idx in range(class_n):
@@ -42,9 +47,10 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 
 			for idx in range(class_n):
 				if idx in class_list:
+					class_count_min_idx = 15000 if idx in important_classes_idx else class_count_min
 					index=int(np.where(class_list==idx)[0])
 					#print("b",index)
-					if class_count[index]<class_count_min:
+					if class_count[index]<class_count_min_idx:
 						predictions[predictions==idx]=20
 						label_test[label_test==idx]=20
 				else:
@@ -52,8 +58,8 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 					label_test[label_test==idx]=20
 
 
-		if debug>=2: print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
-		print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
+		if debug>=0: print("Class unique after eliminating non important classes:",np.unique(label_test,return_counts=True))
+		#print("Pred unique after eliminating non important classes:",np.unique(predictions,return_counts=True))
 
 
 	if debug>0:
@@ -226,7 +232,8 @@ def experiment_groups_analyze(dataset,experiment_group,
 	print(total_metrics)
 	return total_metrics
 
-def experiments_plot(metrics,experiment_list,dataset,experiment_id):
+def experiments_plot(metrics,experiment_list,dataset,
+	experiment_id,small_classes_ignore=False):
 
 
 
@@ -299,7 +306,10 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 			ax3.set_xlim(xlim[0],xlim[1])
 			ax.set_ylim(75,100)
 			ax3.set_ylim(70,100)
-
+			if small_classes_ignore==True:
+				ax.set_ylim(75,100)
+			else:
+				ax.set_ylim(35,85)
 			ax.set_xticks(X+width/2)
 			ax.set_xticklabels(xticklabels)
 			ax2.set_xticks(X+width/2)
@@ -373,9 +383,13 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 	#fig.savefig("f1_score_"+dataset+".eps",format="eps",dpi=300)
 	#fig2.savefig("average_acc_"+dataset+".eps",format="eps",dpi=300)
 	#fig3.savefig("overall_acc_"+dataset+".eps",format="eps",dpi=300)
-	fig.savefig("f1_score_importantclasses2_"+dataset+".png",dpi=300)
-	fig2.savefig("average_acc_importantclasses2_"+dataset+".png",dpi=300)
-	fig3.savefig("overall_acc_importantclasses2_"+dataset+".png",dpi=300)
+	if small_classes_ignore==True:
+		small_classes_ignore_id="_sm"
+	else:
+		small_classes_ignore_id=""
+	fig.savefig("f1_score_importantclasses2_"+dataset+small_classes_ignore_id+".png",dpi=300)
+	fig2.savefig("average_acc_importantclasses2_"+dataset+small_classes_ignore_id+".png",dpi=300)
+	fig3.savefig("overall_acc_importantclasses2_"+dataset+small_classes_ignore_id+".png",dpi=300)
 
 	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
 	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
@@ -387,9 +401,9 @@ def experiments_plot(metrics,experiment_list,dataset,experiment_id):
 	
 	plt.show()
 
-dataset='cv'
+dataset='lm'
 load_metrics=False
-small_classes_ignore=False
+small_classes_ignore=True
 #mode='global'
 mode='each_date'
 if dataset=='cv':
@@ -454,7 +468,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=1
+	exp_id=2
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus.npy',
@@ -481,6 +495,13 @@ if dataset=='cv':
 			'prediction_BUnetAtrousConvLSTM_2convins4.npy',
 			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy']]
 
+		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_BUnetConvLSTM_2convins4.npy',
+			'prediction_BAtrousConvLSTM_2convins5.npy',
+			'prediction_BUnetAtrousConvLSTM_2convins4.npy',
+			'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy']]
+
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
@@ -503,20 +524,29 @@ elif dataset=='lm':
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
-	experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
-		'prediction_deeplab_rs_multiscale_v3plus2.npy',
-		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
-		'prediction_pyramid_dilated_bconvlstm_v3plus2.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus2.npy', #nowifi
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-		[#'prediction_deeplabv3plus_v3plus2.npy',
-		'prediction_deeplab_rs_multiscale_v3plus2.npy',
-		'prediction_deeplab_rs_nowifi.npy',
-		'prediction_deeplabv3_nowifi.npy',
-		'prediction_pyramid_dilated_bconvlstm_v3plus2.npy',
-		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus2.npy',
-		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
+	exp_id=2
+	if exp_id==1:
+		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_deeplab_rs_multiscale_v3plus2.npy',
+			'prediction_deeplab_rs_nowifi.npy',
+			'prediction_deeplabv3_nowifi.npy',
+			'prediction_pyramid_dilated_bconvlstm_v3plus2.npy',
+			'prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus2.npy', #nowifi
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
+			[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_deeplab_rs_multiscale_v3plus2.npy',
+			'prediction_deeplab_rs_nowifi.npy',
+			'prediction_deeplabv3_nowifi.npy',
+			'prediction_pyramid_dilated_bconvlstm_v3plus2.npy',
+			'prediction_FCN_ConvLSTM_seq2seq_bi_skip_v3plus2.npy',
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy']]
+	elif exp_id==2:
+		experiment_groups=[['prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_BUnetConvLSTM_2convins5.npy',
+			'prediction_BAtrousConvLSTM_2convins5.npy',
+			'prediction_BUnetAtrousConvLSTM_2convins5.npy']]
+			#'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'
+		
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)
@@ -529,7 +559,9 @@ else:
 
 
 if mode=='each_date':
-	experiments_plot(experiment_metrics,experiment_groups[0],dataset,experiment_id=exp_id)
+	experiments_plot(experiment_metrics,experiment_groups[0],
+		dataset,experiment_id=exp_id,
+		small_classes_ignore=small_classes_ignore)
 
 #metrics['per_class_acc'][~np.isnan(metrics['per_class_acc'])]
 
