@@ -882,16 +882,37 @@ class NetModel(NetObject):
 			x = Activation('relu')(x)
 			return x		
 		def im_pooling_layer(x,filter_size):
+			pooling=True
 			shape_before=tf.shape(x)
-			x=TimeDistributed(GlobalAveragePooling2D())(x)
-			x=tf.expand_dims(tf.expand_dims(x,2),2)
-			x=dilated_layer(x,filter_size,1,kernel_size=1)
-			x=TimeDistributed(Lambda(
-				lambda y: tf.compat.v1.image.resize(
-					y, shape_before[2:4],
-					method='bilinear',align_corners=True)))(x)
+			print("im pooling")
+			deb.prints(K.int_shape(x))
+			if pooling==True:
+				mode=2
+				if mode==1:
+					x=TimeDistributed(GlobalAveragePooling2D())(x)
+					deb.prints(K.int_shape(x))
+					x=K.expand_dims(K.expand_dims(x,2),2)
+				elif mode==2:
+					x=TimeDistributed(AveragePooling2D((32,32)))(x)
+					deb.prints(K.int_shape(x))
+					
+			deb.prints(K.int_shape(x))
+			#x=dilated_layer(x,filter_size,1,kernel_size=1)
+			deb.prints(K.int_shape(x))
+
+			if pooling==True:
+				x = TimeDistributed(Lambda(lambda y: K.tf.image.resize_bilinear(y,size=(32,32))))(x)
+#				x = TimeDistributed(UpSampling2D(
+#					size=(self.patch_len,self.patch_len)))(x)
+			deb.prints(K.int_shape(x))
+			print("end im pooling")
+			# x=TimeDistributed(Lambda(
+			# 	lambda y: tf.compat.v1.image.resize(
+			# 		y, shape_before[2:4],
+			# 		method='bilinear',align_corners=True)))(x)
 			return x
-		def spatial_pyramid_pooling(in_im,filter_size,max_rate=8):
+		def spatial_pyramid_pooling(in_im,filter_size,
+			max_rate=8,global_average_pooling=False):
 			x=[]
 			if max_rate>=1:
 				x.append(dilated_layer(in_im,filter_size,1))
@@ -901,11 +922,11 @@ class NetModel(NetObject):
 				x.append(dilated_layer(in_im,filter_size,4))
 			if max_rate>=8:
 				x.append(dilated_layer(in_im,filter_size,8))
+			if global_average_pooling==True:
+				x.append(im_pooling_layer(in_im,filter_size))
 			out = keras.layers.concatenate(x, axis=4)
 			return out
 
-			pdc1 = keras.layers.concatenate([d1, d2, d4, d8], axis=4)
-			return x
 
 		if self.model_type=='DenseNet':
 
@@ -1006,8 +1027,8 @@ class NetModel(NetObject):
 						 padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
 							   beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)						 
-			self.graph = Model(in_im, x)
+			out = Activation('relu')(x)						 
+			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi_60x2':
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
@@ -1323,6 +1344,30 @@ class NetModel(NetObject):
 			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='BUnet2ConvLSTM':
+
+
+			#fs=32
+			fs=16
+
+			p1=dilated_layer(in_im,fs)			
+			p1=dilated_layer(p1,fs)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+			p2=dilated_layer(e1,fs*2)
+			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			        padding="same"),merge_mode='concat')(e2)
+
+			d2 = transpose_layer(x,fs*4)
+			d2 = keras.layers.concatenate([d2, p2], axis=4)
+			d1 = transpose_layer(d2,fs*2)
+			d1 = keras.layers.concatenate([d1, p1], axis=4)
+			out=dilated_layer(d1,fs)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+			                            padding='same'))(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		if self.model_type=='UnetTimeDistributed':
 
 
@@ -1360,7 +1405,8 @@ class NetModel(NetObject):
 			#x=dilated_layer(in_im,fs)
 			x=dilated_layer(in_im,fs)
 			x=dilated_layer(x,fs)
-			x=spatial_pyramid_pooling(x,fs*4,max_rate=8)
+			x=spatial_pyramid_pooling(x,fs*4,max_rate=8,
+				global_average_pooling=False)
 			
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 			        padding="same"),merge_mode='concat')(x)
@@ -1368,6 +1414,25 @@ class NetModel(NetObject):
 			#out=dilated_layer(x,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 			                            padding='same'))(x)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+		elif self.model_type=='BAtrousGAPConvLSTM':
+
+			#fs=32
+			fs=16
+			
+			#x=dilated_layer(in_im,fs)
+			x=dilated_layer(in_im,fs)
+			x=dilated_layer(x,fs)
+			x=spatial_pyramid_pooling(x,fs*4,max_rate=8,
+				global_average_pooling=True)
+			
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			        padding="same"),merge_mode='concat')(x)
+
+			out=dilated_layer(x,fs)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='BUnetAtrousConvLSTM':
