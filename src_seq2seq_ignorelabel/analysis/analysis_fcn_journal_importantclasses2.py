@@ -386,6 +386,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 		legends=('BConvLSTM','BDenseConvLSTM','BUnetConvLSTM','BUnet2ConvLSTM','BAtrousGAPConvLSTM','BAtrousConvLSTM','BUnetAtrousConvLSTM','BFCNAtrousConvLSTM')
 	elif experiment_id==3:
 		legends=('UConvLSTM','BConvLSTM','BUnetConvLSTM','BAtrousConvLSTM')
+		legends=('UConvLSTM','BConvLSTM','BUnetConvLSTM','BUnet4ConvLSTM','BAtrousConvLSTM')
 	ax.legend(tuple(exp_handler), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
 	ax2.legend(tuple(exp_handler2), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
 	ax3.legend(tuple(exp_handler3), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
@@ -524,8 +525,9 @@ if dataset=='cv':
 			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			'prediction_BUnetConvLSTM_2convins4.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
 			'prediction_BAtrousConvLSTM_2convins5.npy']]
-		
+	
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
@@ -572,8 +574,9 @@ elif dataset=='lm':
 		experiment_groups=[['prediction_ConvLSTM_seq2seq_batch16_full.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			#'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
-			'prediction_BUnetConvLSTM_2convins5.npy',
-			#'prediction_BUnet2ConvLSTM_raulapproved.npy',
+			#'prediction_BUnetConvLSTM_2convins5.npy',
+			#'prediction_BUnet3ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
 			#'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
 			'prediction_BAtrousConvLSTM_2convins5.npy'
 			]]
