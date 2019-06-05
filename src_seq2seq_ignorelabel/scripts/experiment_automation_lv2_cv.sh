@@ -138,44 +138,23 @@ KERAS_BACKEND=tensorflow
 
 #. experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
 #. experiment_automation.sh $id 'BUnet2ConvLSTM' $dataset  # gonna test balancing after replication
-id='repeating1'
-dataset='cv'
-. patches_extract.sh $dataset
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
+#id='repeating1'
+#dataset='cv'
+#. patches_extract.sh $dataset
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 
 
-id='repeating2'
+id='repeating3'
 
-dataset='cv'
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
+#dataset='cv'
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
 
 dataset='lm'
 . patches_extract.sh $dataset
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
+dataset='lm'
+. patches_extract.sh $dataset
+. experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
 
-#dataset='lm'
-# . patches_extract.sh $dataset
-# . experiment_automation.sh $id 'BUnet3ConvLSTM' $dataset  # gonna test balancing after replication
-# . experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
-# id='repeating2'
-# dataset='lm'
-# . patches_extract.sh $dataset
-# . experiment_automation.sh $id 'BUnet3ConvLSTM' $dataset  # gonna test balancing after replication
-# . experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
-
-# dataset='cv'
-# . patches_extract.sh $dataset
-# . experiment_automation.sh $id 'BUnet3ConvLSTM' $dataset  # gonna test balancing after replication
-# . experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
-# id='repeating3'
-# dataset='lm'
-# . patches_extract.sh $dataset
-# . experiment_automation.sh $id 'BUnet3ConvLSTM' $dataset  # gonna test balancing after replication
-# . experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
-
-# dataset='cv'
-# . patches_extract.sh $dataset
-# . experiment_automation.sh $id 'BUnet3ConvLSTM' $dataset  # gonna test balancing after replication
-# . experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication

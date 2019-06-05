@@ -318,11 +318,13 @@ def experiments_plot(metrics,experiment_list,dataset,
 			ax.set_xlim(xlim[0],xlim[1])
 			ax3.set_xlim(xlim[0],xlim[1])
 			ax.set_ylim(75,100)
-			ax3.set_ylim(70,100)
+			
 			if small_classes_ignore==True:
 				ax.set_ylim(10,80)
+				ax3.set_ylim(70,100)
 			else:
-				ax.set_ylim(35,85)
+				ax.set_ylim(10,80)
+				ax3.set_ylim(35,100)
 			ax.set_xticks(X+width/2)
 			ax.set_xticklabels(xticklabels)
 			ax2.set_xticks(X+width/2)
@@ -339,7 +341,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 			if small_classes_ignore==True:
 				ax.set_ylim(40,87)
 			else:
-				ax.set_ylim(40,80)	
+				ax.set_ylim(7,75)	
 			ax3.set_ylim(65,94)
 
 			ax.set_xticks(X+width/2)
@@ -386,10 +388,16 @@ def experiments_plot(metrics,experiment_list,dataset,
 		legends=('BConvLSTM','BDenseConvLSTM','BUnetConvLSTM','BUnet2ConvLSTM','BAtrousGAPConvLSTM','BAtrousConvLSTM','BUnetAtrousConvLSTM','BFCNAtrousConvLSTM')
 	elif experiment_id==3:
 		legends=('UConvLSTM','BConvLSTM','BUnetConvLSTM','BAtrousConvLSTM')
-		legends=('UConvLSTM','BConvLSTM','BUnetConvLSTM','BUnet4ConvLSTM','BAtrousConvLSTM')
-	ax.legend(tuple(exp_handler), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
-	ax2.legend(tuple(exp_handler2), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
-	ax3.legend(tuple(exp_handler3), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=3)
+		legends=('UConvLSTM','BConvLSTM','BDenseConvLSTM','BUnetConvLSTM','BAtrousConvLSTM','BAtrousGAPConvLSTM')
+	elif experiment_id==4:
+		legends=('UConvLSTM','BConvLSTM','BDenseConvLSTM','BUnetConvLSTM','BAtrousConvLSTM')
+
+	#ncol=len(legends)
+	ncol=3
+
+	ax.legend(tuple(exp_handler), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=ncol)
+	ax2.legend(tuple(exp_handler2), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=ncol)
+	ax3.legend(tuple(exp_handler3), legends,loc='lower center', bbox_to_anchor=(0.5, -0.29), shadow=True, ncol=ncol)
 
 	#ax.set_rasterized(True)
 	#ax2.set_rasterized(True)
@@ -483,7 +491,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=3
+	exp_id=4
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus.npy',
@@ -524,10 +532,54 @@ if dataset=='cv':
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_BUnetConvLSTM_2convins4.npy',
+			#'prediction_BUnetConvLSTM_2convins4.npy',
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
 			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BAtrousConvLSTM_2convins5.npy']]
-	
+			'prediction_BAtrousConvLSTM_2convins5.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',]]
+
+	elif exp_id==4:
+		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
+			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
+			#'prediction_BUnetConvLSTM_2convins4.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			#'prediction_BAtrousConvLSTM_2convins5.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy']]
+
+		experiment_groups=[[
+			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			],
+
+			['prediction_ConvLSTM_seq2seq_redoing.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoing.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+
+			],
+			['prediction_ConvLSTM_seq2seq_redoingz.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+
+			],
+			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			]]
+
+
+
+
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
@@ -550,7 +602,7 @@ elif dataset=='lm':
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
-	exp_id=3
+	exp_id=4
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus2.npy',
@@ -573,15 +625,40 @@ elif dataset=='lm':
 	elif exp_id==3:
 		experiment_groups=[['prediction_ConvLSTM_seq2seq_batch16_full.npy',
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			#'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
 			#'prediction_BUnetConvLSTM_2convins5.npy',
 			#'prediction_BUnet3ConvLSTM_repeating1.npy',
 			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			#'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
-			'prediction_BAtrousConvLSTM_2convins5.npy'
+			'prediction_BAtrousConvLSTM_2convins5.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
 			]]
 			#'prediction_BUnetAtrousConvLSTM_v3p_2convins2.npy'
-		
+	elif exp_id==4:
+		experiment_groups=[[
+			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			],
+			['prediction_ConvLSTM_seq2seq_redoing.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoing.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			],
+			['prediction_ConvLSTM_seq2seq_redoingz.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoingz.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			],
+			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			],]
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)
