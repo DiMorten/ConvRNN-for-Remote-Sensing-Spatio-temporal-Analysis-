@@ -12,6 +12,7 @@ from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classificat
 from sklearn.externals import joblib
 import matplotlib.pyplot as plt
 import pandas as pd
+import cv2
 file_id="importantclasses"
 #====================================
 def labels_predictions_filter_transform(label_test,predictions,class_n,
@@ -264,7 +265,8 @@ def experiments_plot(metrics,experiment_list,dataset,
 	#width=0.5
 	width=0.25
 	
-	colors=['b','y','c','m','r','g','b','y']
+	colors=['b','y','c','g','m','r','b','y']
+	colors=['b','g','r','c','m','y','b','g']
 	#colors=['#7A9AAF','#293C4B','#FF8700']
 	#colors=['#4225AC','#1DBBB9','#FBFA17']
 	##colors=['b','#FBFA17','c']
@@ -323,7 +325,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 				ax.set_ylim(10,80)
 				ax3.set_ylim(70,100)
 			else:
-				ax.set_ylim(10,80)
+				ax.set_ylim(10,82)
 				ax3.set_ylim(35,100)
 			ax.set_xticks(X+width/2)
 			ax.set_xticklabels(xticklabels)
@@ -342,7 +344,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 				ax.set_ylim(40,87)
 			else:
 				ax.set_ylim(7,75)	
-			ax3.set_ylim(65,94)
+			ax3.set_ylim(56,94)
 
 			ax.set_xticks(X+width/2)
 			ax.set_xticklabels(xticklabels)
@@ -410,10 +412,22 @@ def experiments_plot(metrics,experiment_list,dataset,
 		small_classes_ignore_id="_sm"
 	else:
 		small_classes_ignore_id=""
-	fig.savefig("f1_score_importantclasses2_"+dataset+small_classes_ignore_id+".png",dpi=300)
-	fig2.savefig("average_acc_importantclasses2_"+dataset+small_classes_ignore_id+".png",dpi=300)
-	fig3.savefig("overall_acc_importantclasses2_"+dataset+small_classes_ignore_id+".png",dpi=300)
+	fig_names={'f1':"f1_score_importantclasses2_"+dataset+small_classes_ignore_id+".png",
+		'aa':"average_acc_importantclasses2_"+dataset+small_classes_ignore_id+".png",
+		'oa':"overall_acc_importantclasses2_"+dataset+small_classes_ignore_id+".png"}
+	
+	for f, filename in zip([fig, fig2, fig3],fig_names.values()):
+		f.savefig(filename, dpi=300)
 
+	def fig_crop(inpath):
+		fig=cv2.imread(inpath)
+		h,w,c =fig.shape
+		fig=fig[:,150:w-150,:]
+		cv2.imwrite(inpath[:-4]+'_crop.png',fig)
+
+	for k, v in fig_names.items():
+		fig_crop(v)
+	
 	#plt.bar(X + 0.00, data[0], color = 'b', width = 0.25)
 	#plt.bar(X + 0.25, data[1], color = 'g', width = 0.25)
 	#plt.bar(X + 0.50, data[2], color = 'r', width = 0.25)
@@ -491,7 +505,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=4
+	exp_id=5
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus.npy',
@@ -534,9 +548,11 @@ if dataset=='cv':
 			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			#'prediction_BUnetConvLSTM_2convins4.npy',
 			'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy',
+			'prediction_DenseNetTimeDistributed_128x2_3blocks_repeating3.npy',
 			'prediction_BUnet4ConvLSTM_repeating2.npy',
 			'prediction_BAtrousConvLSTM_2convins5.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',]]
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy']]
 
 	elif exp_id==4:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -546,7 +562,8 @@ if dataset=='cv':
 			#'prediction_BUnetConvLSTM_2convins4.npy',
 			'prediction_BUnet4ConvLSTM_repeating1.npy',
 			#'prediction_BAtrousConvLSTM_2convins5.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy']]
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			]]
 
 		experiment_groups=[[
 			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
@@ -567,14 +584,23 @@ if dataset=='cv':
 			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
 			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
 
 			],
 			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
+			]]
+	elif exp_id==5:
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
 			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
 			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
 			]]
 
 
@@ -602,7 +628,7 @@ elif dataset=='lm':
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
-	exp_id=4
+	exp_id=5
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus2.npy',
@@ -644,21 +670,36 @@ elif dataset=='lm':
 			['prediction_ConvLSTM_seq2seq_redoing.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoing.npy',
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
 			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
 			],
 			['prediction_ConvLSTM_seq2seq_redoingz.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoingz.npy',
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
 			],
 			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
 			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
 			],]
+	elif exp_id==5:
+		experiment_groups=[[
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			]]		
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
+			
+			]]		
+			
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)

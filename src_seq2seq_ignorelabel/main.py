@@ -1098,6 +1098,19 @@ class NetModel(NetObject):
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='DenseNetTimeDistributed_128x2_3blocks':
+
+
+			#x = keras.layers.Permute((1,2,0,3))(in_im)
+			#x = keras.layers.Permute((2,3,1,4))(in_im)
+			
+			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=3, growth_rate=32, dropout_rate=0.2,
+							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
+							activation='softmax', batchsize=32,input_tensor=in_im,
+							recurrent_filters=128)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		if self.model_type=='pyramid_dilated':
 
 			d1 = TimeDistributed(Conv2D(16, (3, 3), padding='same',

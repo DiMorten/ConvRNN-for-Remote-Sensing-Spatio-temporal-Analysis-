@@ -144,7 +144,7 @@ KERAS_BACKEND=tensorflow
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 
 
-id='repeating3'
+id='repeating5'
 
 #dataset='cv'
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
@@ -152,9 +152,10 @@ id='repeating3'
 
 dataset='lm'
 . patches_extract.sh $dataset
-#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 . experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
-dataset='lm'
+dataset='cv'
 . patches_extract.sh $dataset
+. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 . experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
 
