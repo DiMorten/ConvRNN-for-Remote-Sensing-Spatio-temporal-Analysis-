@@ -144,18 +144,38 @@ KERAS_BACKEND=tensorflow
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 
 
-id='repeating5'
+id='repeating_timey'
 
 #dataset='cv'
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 #. experiment_automation.sh $id 'BAtrousConvLSTM' $dataset  # gonna test balancing after replication
 
-dataset='lm'
-. patches_extract.sh $dataset
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
+#dataset='lm'
+#. patches_extract.sh $dataset
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+#. experiment_automation.sh $id 'BUnet5ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+#dataset='cv'
+#. patches_extract.sh $dataset
+#. experiment_automation.sh $id 'BUnet5ConvLSTM' $dataset  # gonna test balancing after replication
 dataset='cv'
 . patches_extract.sh $dataset
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2_inconv' $dataset  # Unet5 uses 1 conv. in
+. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # Unet5 uses 1 conv. in
+. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset  # Unet5 uses 1 conv. in
 . experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # Unet5 uses 1 conv. in
+
+#dataset='cv'
+#. patches_extract.sh $dataset
+#. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2_inconv' $dataset  # Unet5 uses 1 conv. in
+
+#. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
+
+#dataset='cv'
+#. patches_extract.sh $dataset
+#. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2_3blocks' $dataset  # gonna test balancing after replication
+
 

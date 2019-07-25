@@ -592,7 +592,17 @@ if dataset=='cv':
 			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
 			'prediction_BUnet4ConvLSTM_repeating4.npy',
 			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
+			],
+			['prediction_ConvLSTM_seq2seq_redoingz.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
+			'prediction_BUnet4ConvLSTM_repeating7.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating7.npy',
 			]]
+
+
+
+
 	elif exp_id==5:
 		experiment_groups=[[
 			'prediction_BUnet4ConvLSTM_repeating1.npy',
@@ -601,9 +611,24 @@ if dataset=='cv':
 			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
 			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
 			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating6.npy',
+			]]
+		experiment_groups=[[
+			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
+			'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
+			]]
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			'prediction_BUnet5ConvLSTM_unet_one_conv_in.npy',
+			
 			]]
 
-
+		experiment_groups=[[
+			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
+			'prediction_DenseNetTimeDistributed_128x2_inconv_unet_one_conv_in.npy'
+			]]
 
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
@@ -671,7 +696,7 @@ elif dataset=='lm':
 			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoing.npy',
 			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating6.npy',
 			],
 			['prediction_ConvLSTM_seq2seq_redoingz.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
@@ -682,24 +707,54 @@ elif dataset=='lm':
 			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating6.npy',
 			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
-			],]
+			],
+			['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
+			'prediction_BUnet4ConvLSTM_repeating7.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating7.npy',
+			],
+
+			]
 	elif exp_id==5:
 		experiment_groups=[[
 			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
 			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
 			]]		
 		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			#'prediction_BUnet4ConvLSTM_repeating1.npy',
+			#'prediction_BUnet4ConvLSTM_repeating2.npy',
+			#'prediction_BUnet4ConvLSTM_repeating4.npy',
+			#'prediction_BUnet4ConvLSTM_repeating6.npy',
+			
 			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
 			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
 			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating6.npy',
 			
 			]]		
+		experiment_groups=[[
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
+			'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
+			]]		
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			'prediction_BUnet4ConvLSTM_unet_one_conv_in.npy',
+			'prediction_BUnet5ConvLSTM_unet_one_conv_in.npy',
 			
+			]]
+
+
+		experiment_groups=[[
+			'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy',
+			'prediction_DenseNetTimeDistributed_128x2_inconv_unet_one_conv_in.npy'
+			#'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
+			]]
+
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)

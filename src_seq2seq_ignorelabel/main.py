@@ -1098,6 +1098,20 @@ class NetModel(NetObject):
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='DenseNetTimeDistributed_128x2_inconv':
+
+
+			#x = keras.layers.Permute((1,2,0,3))(in_im)
+			#x = keras.layers.Permute((2,3,1,4))(in_im)
+			
+			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+			x=dilated_layer(in_im,16)
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=64, dropout_rate=0.2,
+							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
+							activation='softmax', batchsize=32,input_tensor=x,
+							recurrent_filters=128)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		if self.model_type=='DenseNetTimeDistributed_128x2_3blocks':
 
 
@@ -1415,6 +1429,36 @@ class NetModel(NetObject):
 			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		if self.model_type=='BUnet5ConvLSTM':
+
+
+			#fs=32
+			fs=16
+
+			p1=dilated_layer(in_im,fs)			
+			#p1=dilated_layer(p1,fs)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+			p2=dilated_layer(e1,fs*2)
+			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+			p3=dilated_layer(e2,fs*4)
+			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			        padding="same"),merge_mode='concat')(e3)
+
+			d3 = transpose_layer(x,fs*4)
+			d3 = keras.layers.concatenate([d3, p3], axis=4)
+			d3=dilated_layer(d3,fs*4)
+			d2 = transpose_layer(d3,fs*2)
+			d2 = keras.layers.concatenate([d2, p2], axis=4)
+			d2=dilated_layer(d2,fs*2)
+			d1 = transpose_layer(d2,fs)
+			d1 = keras.layers.concatenate([d1, p1], axis=4)
+			out=dilated_layer(d1,fs)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+			                            padding='same'))(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		if self.model_type=='BUnet2ConvLSTM':
 
 
@@ -1562,7 +1606,7 @@ class NetModel(NetObject):
 						 padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		self.graph = Model(in_im, out)
+		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 
 
