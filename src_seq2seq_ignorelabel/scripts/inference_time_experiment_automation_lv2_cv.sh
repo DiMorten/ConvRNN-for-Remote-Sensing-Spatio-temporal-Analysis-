@@ -144,7 +144,7 @@ KERAS_BACKEND=tensorflow
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 
 
-id='repeating_timey3'
+id='inference_time'
 
 #dataset='cv'
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
@@ -160,11 +160,11 @@ id='repeating_timey3'
 dataset='cv'
 . patches_extract.sh $dataset
 #. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2_inconv' $dataset  # Unet5 uses 1 conv. in
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # Unet5 uses 1 conv. in
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset  # Unet5 uses 1 conv. in
-. experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # Unet5 uses 1 conv. in
+. inference_time_experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset  # Unet5 uses 1 conv. in
+. inference_time_experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # Unet5 uses 1 conv. in
+. inference_time_experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+. inference_time_experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
+. inference_time_experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # Unet5 uses 1 conv. in
 
 #dataset='cv'
 #. patches_extract.sh $dataset

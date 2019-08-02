@@ -72,9 +72,11 @@ parser.add_argument('-path', '--path', dest='path',
 					default='../data/', help='Experiment id')
 parser.add_argument('-mdl', '--model_type', dest='model_type',
 					default='DenseNet', help='Experiment id')
-
+parser.add_argument('-wfl', '--weights_filename', dest='weights_filename',
+					default='DenseNet', help='Experiment id')
 
 args = parser.parse_args()
+
 
 if args.patch_step_test==None:
 	args.patch_step_test=args.patch_len
@@ -917,11 +919,11 @@ class NetModel(NetObject):
 			if max_rate>=1:
 				x.append(dilated_layer(in_im,filter_size,1))
 			if max_rate>=2:
-				x.append(dilated_layer(in_im,filter_size,2)) #6
+				x.append(dilated_layer(in_im,filter_size,2))
 			if max_rate>=4:
-				x.append(dilated_layer(in_im,filter_size,4)) #12
+				x.append(dilated_layer(in_im,filter_size,4))
 			if max_rate>=8:
-				x.append(dilated_layer(in_im,filter_size,8)) #18
+				x.append(dilated_layer(in_im,filter_size,8))
 			if global_average_pooling==True:
 				x.append(im_pooling_layer(in_im,filter_size))
 			out = keras.layers.concatenate(x, axis=4)
@@ -1703,6 +1705,17 @@ class NetModel(NetObject):
 		deb.prints(data.patches['train']['batch_n'])
 
 		self.train_loop(data)
+	def test(self, data):
+
+
+		# Computing the number of batches
+		data.patches['train']['batch_n'] = data.patches['train']['in'].shape[0]//self.batch['train']['size']
+		data.patches['test']['batch_n'] = data.patches['test']['in'].shape[0]//self.batch['test']['size']
+		data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
+
+		deb.prints(data.patches['train']['batch_n'])
+
+		self.train_loop(data)
 
 	def early_stop_check(self,metrics,epoch,most_important='overall_acc'):
 
@@ -1774,86 +1787,17 @@ class NetModel(NetObject):
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
-
-			#=============================TRAIN LOOP=========================================#
-			for batch_id in range(0, self.batch['train']['n']):
-				
-				idx0 = batch_id*self.batch['train']['size']
-				idx1 = (batch_id+1)*self.batch['train']['size']
-
-				batch['train']['in'] = data.patches['train']['in'][idx0:idx1]
-				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
-				if self.time_measure==True:
-					start_time=time.time()
-				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'].astype(np.float32), 
-					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-				if self.time_measure==True:
-					batch_time=time.time()-start_time
-					print(batch_time)
-					sys.exit('Batch time:')
-			# Average epoch loss
-			self.metrics['train']['loss'] /= self.batch['train']['n']
-
 			self.train_predict=True
 			#if self.train_predict:
 
 
 
-			#================== VAL LOOP=====================#
-			if self.val_set:
-				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
-				self.batch_test_stats=False
-
-				for batch_id in range(0, self.batch['val']['n']):
-					idx0 = batch_id*self.batch['val']['size']
-					idx1 = (batch_id+1)*self.batch['val']['size']
-
-					batch['val']['in'] = data.patches['val']['in'][idx0:idx1]
-					batch['val']['label'] = data.patches['val']['label'][idx0:idx1]
-
-					if self.batch_test_stats:
-						self.metrics['val']['loss'] += self.graph.test_on_batch(
-							batch['val']['in'].astype(np.float32), 
-							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-
-					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['val']['in'].astype(np.float32),batch_size=self.batch['val']['size'])
-				self.metrics['val']['loss'] /= self.batch['val']['n']
-
-				metrics_val=data.metrics_get(data.patches['val'],debug=2)
-
-				self.early_stop_check(metrics_val,epoch)
-				#if epoch==1000 or epoch==700 or epoch==500 or epoch==1200:
-				#	self.early_stop['signal']=True
-				#else:
-				#	self.early_stop['signal']=False
-				#if self.early_stop['signal']==True:
-				#	self.graph.save('model_'+str(epoch)+'.h5')
-
-				metrics_val['per_class_acc'].setflags(write=1)
-				metrics_val['per_class_acc'][np.isnan(metrics_val['per_class_acc'])]=-1
-				print(metrics_val['per_class_acc'])
-				
-				# if epoch % 5 == 0:
-				# 	print("Writing val...")
-				# 	#print(txt['val']['metrics'])
-				# 	for i in range(len(txt['val']['metrics'])):
-				# 		data.metrics_write_to_txt(txt['val']['metrics'][i],np.squeeze(txt['val']['loss'][i]),
-				# 			txt['val']['epoch'][i],path=self.report['val']['history_path'])
-				# 	txt['val']['metrics']=[]
-				# 	txt['val']['loss']=[]
-				# 	txt['val']['epoch']=[]
-				# else:
-				# 	txt['val']['metrics'].append(metrics_val)
-				# 	txt['val']['loss'].append(self.metrics['val']['loss'])
-				# 	txt['val']['epoch'].append(epoch)
-
 			
 			#==========================TEST LOOP================================================#
-			if self.early_stop['signal']==True:
-				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			#if self.early_stop['signal']==True:
+			#	self.graph.load_weights('weights_best.h5')
+			test_loop_each_epoch=True
+			test_time0=time.time()
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=False
@@ -1872,8 +1816,8 @@ class NetModel(NetObject):
 
 					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(
 						batch['test']['in'].astype(np.float32),batch_size=self.batch['test']['size'])
-
-
+			print("Inference time:",time.time()-test_time0)
+			sys.exit('Measurement finished')
 			#====================METRICS GET================================================#
 			deb.prints(data.patches['test']['label'].shape)		
 			deb.prints(idx1)
@@ -2014,7 +1958,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
+	balancing=False
 	if balancing==True:
 
 		
@@ -2083,10 +2027,12 @@ if __name__ == '__main__':
 				  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
 	model_load=False
 	if model_load:
-		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-		model.test(data)
+		print("=========== LOADING MODEL ============")
+		deb.prints(args.weights_filename)
+		model.graph.load_weights(args.weights_filename)
+	model.test(data)
 	
 	if args.debug:
 		deb.prints(np.unique(data.patches['train']['label']))
 		deb.prints(data.patches['train']['label'].shape)
-	model.train(data)
+	#model.test(data)
