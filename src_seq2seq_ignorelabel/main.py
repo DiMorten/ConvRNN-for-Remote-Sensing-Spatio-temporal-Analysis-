@@ -85,6 +85,11 @@ def model_summary_print(s):
     with open('model_summary.txt','w+') as f:
         print(s, file=f)
 
+
+def txt_append(filename, append_text):
+	with open(filename, "a") as myfile:
+		myfile.write(append_text)
+
 # ================= Generic class for init values =============================================== #
 class NetObject(object):
 
@@ -1896,7 +1901,11 @@ class NetModel(NetObject):
 			if self.early_stop["signal"]==True:
 				self.early_stop['best_predictions']=data.patches['test']['prediction']
 				print("EARLY STOP EPOCH",epoch,metrics)
-				print("Training time",time.time()-init_time)
+				training_time=round(time.time()-init_time,2)
+				print("Training time",training_time)
+				metadata = "Timestamp:"+ str(round(time.time(),2))+". Model: "+self.model_type+". Training time: "+str(training_time)+"\n"
+				print(metadata)
+				txt_append("metadata.txt",metadata)
 				np.save("prediction.npy",self.early_stop['best_predictions'])
 				np.save("labels.npy",data.patches['test']['label'])
 				break
