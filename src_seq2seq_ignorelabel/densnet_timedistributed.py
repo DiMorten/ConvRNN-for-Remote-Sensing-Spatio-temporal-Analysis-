@@ -40,7 +40,7 @@ def DenseNetFCNTimeDistributed(input_shape, nb_dense_block=5, growth_rate=16, nb
                 reduction=0.0, dropout_rate=0.0, weight_decay=1E-4, init_conv_filters=48,
                 include_top=True, weights=None, input_tensor=None, classes=1, activation='softmax',
                 upsampling_conv=128, upsampling_type='upsampling', batchsize=None,
-                recurrent_filters=convlstm_filters):
+                recurrent_filters=convlstm_filters, attention=False):
     """Instantiate the DenseNet FCN architecture.
         Note that when using TensorFlow,
         for best performance you should set
@@ -412,9 +412,16 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
     # The last dense_block does not have a transition_down_block
     # return the concatenated feature maps without the concatenation of the input
 
-    x = Bidirectional(ConvLSTM2D(recurrent_filters, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
-                          kernel_regularizer=l2(weight_decay),
-                          return_sequences=True))(x)
+    if attention==True:
+        x = Bidirectional(ConvLSTM2D(recurrent_filters, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+                              kernel_regularizer=l2(weight_decay),
+                              return_sequences=True))(x)
+
+    elif attention==False:
+
+        x = Bidirectional(ConvLSTM2D(recurrent_filters, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
+                              kernel_regularizer=l2(weight_decay),
+                              return_sequences=True))(x)
     _, nb_filter, concat_list = __dense_block(x, bottleneck_nb_layers, nb_filter, growth_rate,
                                               dropout_rate=dropout_rate, weight_decay=weight_decay,
                                               return_concat_list=True,

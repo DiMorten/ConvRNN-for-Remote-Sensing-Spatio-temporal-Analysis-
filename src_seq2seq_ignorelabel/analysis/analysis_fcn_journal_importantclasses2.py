@@ -438,7 +438,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 	
 	plt.show()
 
-dataset='cv'
+dataset='lm'
 load_metrics=False
 small_classes_ignore=False
 #mode='global'
@@ -653,7 +653,7 @@ elif dataset=='lm':
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
-	exp_id=5
+	exp_id=6
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus2.npy',
@@ -754,7 +754,11 @@ elif dataset=='lm':
 			'prediction_DenseNetTimeDistributed_128x2_inconv_unet_one_conv_in.npy'
 			#'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
 			]]
-
+	elif exp_id==6: #hyperparams
+		experiment_groups=[[
+			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_hyperparams.npy' #double filters
+			]]
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)

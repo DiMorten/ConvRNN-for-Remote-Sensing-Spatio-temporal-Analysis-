@@ -34,6 +34,7 @@ from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D
 from keras.utils.vis_utils import plot_model
 from keras.regularizers import l2
 import time
+import pickle
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -89,7 +90,9 @@ def model_summary_print(s):
 def txt_append(filename, append_text):
 	with open(filename, "a") as myfile:
 		myfile.write(append_text)
-
+def load_obj(name ):
+	with open('obj/' + name + '.pkl', 'rb') as f:
+		return pickle.load(f)
 # ================= Generic class for init values =============================================== #
 class NetObject(object):
 
@@ -117,6 +120,7 @@ class NetObject(object):
 		self.report['val']['history_path']='../results/'+'history_val.txt'
 		
 		self.t_len=t_len
+
 # ================= Dataset class implements data loading, patch extraction, metric calculation and image reconstruction =======#
 class Dataset(NetObject):
 
@@ -756,6 +760,7 @@ class NetModel(NetObject):
 
 		self.model_save=True
 		self.time_measure=time_measure
+		self.mp=load_obj('model_params')
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
 		pipe = keras.layers.BatchNormalization(axis=3)(pipe)
@@ -1023,7 +1028,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, x)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(256,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -1097,8 +1102,8 @@ class NetModel(NetObject):
 			#x = keras.layers.Permute((2,3,1,4))(in_im)
 			
 			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
-			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=64, dropout_rate=0.2,
-							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=self.mp['dense']['nb_dense_block'], growth_rate=self.mp['dense']['growth_rate'], dropout_rate=0.2,
+							nb_layers_per_block=self.mp['dense']['nb_layers_per_block'], upsampling_type='deconv', classes=self.class_n, 
 							activation='softmax', batchsize=32,input_tensor=in_im,
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
@@ -1611,6 +1616,18 @@ class NetModel(NetObject):
 						 padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+		elif self.model_type=='Attention_DenseNetTimeDistributed_128x2':
+
+
+			#x = keras.layers.Permute((1,2,0,3))(in_im)
+			#x = keras.layers.Permute((2,3,1,4))(in_im)
+			
+			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+			out = DenseNetFCNTimeDistributedAttention((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=self.mp['dense']['nb_dense_block'], growth_rate=self.mp['dense']['growth_rate'], dropout_rate=0.2,
+							nb_layers_per_block=self.mp['dense']['nb_layers_per_block'], upsampling_type='deconv', classes=self.class_n, 
+							activation='softmax', batchsize=32,input_tensor=in_im,
+							recurrent_filters=128)
+			self.graph = Model(in_im, out)
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 

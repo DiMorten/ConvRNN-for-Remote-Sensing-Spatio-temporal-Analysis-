@@ -59,7 +59,7 @@ shutter -f -o $im_name -e
 cd scripts
 path="../${im_name}"
 echo "${path}"
-. ifttt_send.sh $path
+#. ifttt_send.sh $path
 
 # =============== MOVE PREDICTIONS TO RESULT FOLDER ======
 #results_path='../results/seq2seq_ignorelabel/cv/'
