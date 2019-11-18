@@ -85,3 +85,4 @@ src/repeat_results.pickle
 *.eps
 *.pdf
 *.csv
+*.zip
