@@ -35,52 +35,6 @@ from keras.utils.vis_utils import plot_model
 from keras.regularizers import l2
 import time
 import pickle
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('-tl', '--t_len', dest='t_len',
-					type=int, default=7, help='t len')
-parser.add_argument('-cn', '--class_n', dest='class_n',
-					type=int, default=11, help='class_n')
-parser.add_argument('-chn', '--channel_n', dest='channel_n',
-					type=int, default=2, help='channel number')
-
-parser.add_argument('-pl', '--patch_len', dest='patch_len',
-					type=int, default=32, help='patch len')
-parser.add_argument('-pstr', '--patch_step_train', dest='patch_step_train',
-					type=int, default=32, help='patch len')
-parser.add_argument('-psts', '--patch_step_test', dest='patch_step_test',
-					type=int, default=None, help='patch len')
-
-parser.add_argument('-db', '--debug', dest='debug',
-					type=int, default=1, help='patch len')
-parser.add_argument('-ep', '--epochs', dest='epochs',
-					type=int, default=8000, help='patch len')
-parser.add_argument('-pt', '--patience', dest='patience',
-					type=int, default=10, help='patience')
-
-parser.add_argument('-bstr', '--batch_size_train', dest='batch_size_train',
-					type=int, default=32, help='patch len')
-parser.add_argument('-bsts', '--batch_size_test', dest='batch_size_test',
-					type=int, default=32, help='patch len')
-
-parser.add_argument('-em', '--eval_mode', dest='eval_mode',
-					default='metrics', help='Test evaluate mode: metrics or predict')
-parser.add_argument('-is', '--im_store', dest='im_store',
-					default=True, help='Store sample test predicted images')
-parser.add_argument('-eid', '--exp_id', dest='exp_id',
-					default='default', help='Experiment id')
-
-parser.add_argument('-path', '--path', dest='path',
-					default='../data/', help='Experiment id')
-parser.add_argument('-mdl', '--model_type', dest='model_type',
-					default='DenseNet', help='Experiment id')
-
-
-args = parser.parse_args()
-
-if args.patch_step_test==None:
-	args.patch_step_test=args.patch_len
-
-deb.prints(args.patch_step_test)
 
 def model_summary_print(s):
 	with open('model_summary.txt','w+') as f:
@@ -732,7 +686,7 @@ class Dataset(NetObject):
 
 class NetModel(NetObject):
 	def __init__(self, batch_size_train=32, batch_size_test=200, epochs=30000, 
-		patience=10, eval_mode='metrics', val_set=True,
+		patience=10, val_set=True,
 		model_type='DenseNet', time_measure=False, *args, **kwargs):
 
 		super().__init__(*args, **kwargs)
@@ -745,7 +699,7 @@ class NetModel(NetObject):
 		self.batch['test']['size'] = batch_size_test
 		self.batch['val']['size'] = batch_size_test
 		
-		self.eval_mode = eval_mode
+		#self.eval_mode = eval_mode
 		self.epochs = epochs
 		self.early_stop={'best':0,
 					'count':0,
@@ -1028,7 +982,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, x)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(256,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -1668,37 +1622,7 @@ class NetModel(NetObject):
 										padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		if self.model_type=='fcn_lstm_temouri2':
 
-
-			#fs=32
-			fs=16
-
-			p1=dilated_layer(in_im,fs)			
-			p1=dilated_layer(p1,fs)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-			p2=dilated_layer(e1,fs*2)
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-			p3=dilated_layer(e2,fs*4)
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
-
-			x=dilated_layer(e3,fs*8)
-
-			d3 = transpose_layer(x,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=4)
-			d3=dilated_layer(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=4)
-			d2=dilated_layer(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=4)
-			out=dilated_layer(d1,fs)
-			out = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(out)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 
@@ -1708,13 +1632,9 @@ class NetModel(NetObject):
 		with open('model_summary.txt','w') as fh:
 			self.graph.summary(line_length=125,print_fn=lambda x: fh.write(x+'\n'))
 		#self.graph.summary(print_fn=model_summary_print)
-	def compile(self, optimizer, loss='binary_crossentropy', metrics=['accuracy',metrics.categorical_accuracy],loss_weights=None):
-		#loss_weighted=weighted_categorical_crossentropy(loss_weights)
+	def compile(self, optimizer, metrics=['accuracy',metrics.categorical_accuracy],loss_weights=None):
 		loss_weighted=weighted_categorical_crossentropy_ignoring_last_label(loss_weights)
-		#sparse_accuracy_ignoring_last_label()
 		self.graph.compile(loss=loss_weighted, optimizer=optimizer, metrics=metrics)
-		#self.graph.compile(loss=sparse_accuracy_ignoring_last_label, optimizer=optimizer, metrics=metrics)
-		#self.graph.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=metrics)
 	def loss_weights_estimate(self,data):
 		unique,count=np.unique(data.patches['train']['label'].argmax(axis=4),return_counts=True)
 		unique=unique[1:] # No bcknd
@@ -2045,145 +1965,3 @@ class NetModel(NetObject):
 				print("Train loss",self.metrics['train']['loss'])
 			#====================END METRICS GET===========================================#
 
-
-flag = {"data_create": 2, "label_one_hot": True}
-if __name__ == '__main__':
-	#
-	
-	time_measure=False
-	#if data.dataset=='seq2':
-	#	args.class_n=10
-
-	data = Dataset(patch_len=args.patch_len, patch_step_train=args.patch_step_train,
-		patch_step_test=args.patch_step_test,exp_id=args.exp_id,
-		path=args.path, t_len=args.t_len, class_n=args.class_n)
-
-	#data.dataset='seq2'
-
-	if flag['data_create']==1:
-		data.create()
-	elif flag['data_create']==2:
-		data.create_load()
-
-	if data.dataset=='seq1' or data.dataset=='seq2':
-		args.patience=10
-	else:
-		args.patience=15
-	
-	
-	val_set=True
-	#val_set_mode='stratified'
-	val_set_mode='stratified'
-	#val_set_mode='random'
-
-	deb.prints(data.patches['train']['label'].shape)
-
-	
-	deb.prints(data.patches['train']['label'].shape)
-	deb.prints(data.patches['test']['label'].shape)
-	
-	test_label_unique,test_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
-	deb.prints(test_label_unique)
-	deb.prints(test_label_count)
-	train_label_unique,train_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
-	deb.prints(train_label_unique)
-	deb.prints(train_label_count)
-	data.label_unique=test_label_unique.copy()
-	
-
-
-
-	adam = Adam(lr=0.0001, beta_1=0.9)
-	adam = Adagrad(0.01)
-	model = NetModel(epochs=args.epochs, patch_len=args.patch_len,
-					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
-					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
-					 patience=args.patience,t_len=args.t_len,class_n=args.class_n,path=args.path,
-					 val_set=val_set,model_type=args.model_type, time_measure=time_measure)
-	model.class_n=data.class_n-1 # Model is designed without background class
-	deb.prints(data.class_n)
-	model.build()
-	model.class_n+=1 # This is used in loss_weights_estimate, val_set_get, semantic_balance (To-do: Eliminate bcknd class)
-	deb.prints(data.patches['train']['label'].shape)
-
-	# === SELECT VALIDATION SET FROM TRAIN SET
-	val_set = True # fix this
-	if val_set:
-		data.val_set_get(val_set_mode,0.15)
-		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
-	if balancing==True:
-
-		
-		# If patch balancing
-		
-		if data.dataset=='seq1' or data.dataset=='seq2':
-			#data.semantic_balance(500) #Changed from 1000
-			data.semantic_balance(500) #More for seq2seq
-			
-		else:
-			data.semantic_balance(300)
-	model.loss_weights_estimate(data)
-
-	model.class_n-=1
-	# Label background from 0 to last. 
-	deb.prints(data.patches['train']['label'].shape)
-	# ===
-	def label_bcknd_from_0_to_last(label_one_hot,class_n):		
-		print("Changing bcknd from 0 to last...")
-		deb.prints(np.unique(label_one_hot.argmax(axis=4),return_counts=True))
-
-		label_h=np.reshape(label_one_hot,(-1,label_one_hot.shape[-1]))
-		print("label_h",label_h.shape)
-		label_int=label_h.argmax(axis=1)
-		label_int[label_int==0]=class_n+1# This number counts the bcknd. So if 3 classes+bcknd=4, class_n=4
-		label_int-=1
-
-		out = np.zeros((label_int.shape[0], class_n+1))
-		out[np.arange(label_int.shape[0]),label_int]=1
-		deb.prints(out.shape)
-		out=np.reshape(out,(label_one_hot.shape))
-
-		deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
-
-		return out.astype(np.int8)	
-
-	# def label_bcknd_from_0_to_last(label,class_n):	
-	# 	print("Changing bcknd from 0 to last...")
-	# 	deb.prints(np.unique(label.argmax(axis=4),return_counts=True))
-
-	# 	out=np.zeros_like(label)
-	# 	valid_class_ids=[i for i in range(1,class_n+1)]
-	# 	out=label[:,:,:,:,valid_class_ids+[0]]
-	# 	deb.prints(np.unique(out.argmax(axis=4),return_counts=True))
-
-	# 	return out
-
-
-	deb.prints(data.patches['train']['label'][560,:,15,15,:])
-	data.patches['train']['label']=label_bcknd_from_0_to_last(
-		data.patches['train']['label'],model.class_n)
-	deb.prints(data.patches['train']['label'][560,:,15,15,:])
-
-	data.patches['test']['label']=label_bcknd_from_0_to_last(
-		data.patches['test']['label'],model.class_n)
-	data.patches['val']['label']=label_bcknd_from_0_to_last(
-		data.patches['val']['label'],model.class_n)
-	data.patches['test']['in']=data.patches['test']['in'].astype(np.float32)
-	data.patches['train']['in']=data.patches['train']['in'].astype(np.float32)		
-	deb.prints(data.patches['val']['label'].shape)
-	#=========== Hannover
-
-	metrics=['accuracy']
-	#metrics=['accuracy',fmeasure,categorical_accuracy]
-	model.compile(loss='binary_crossentropy',
-				  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
-	model_load=False
-	if model_load:
-		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-		model.test(data)
-	
-	if args.debug:
-		deb.prints(np.unique(data.patches['train']['label']))
-		deb.prints(data.patches['train']['label'].shape)
-	model.train(data)

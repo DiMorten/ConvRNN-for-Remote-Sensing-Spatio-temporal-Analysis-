@@ -1699,6 +1699,7 @@ class NetModel(NetObject):
 										padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 
@@ -1947,7 +1948,8 @@ class NetModel(NetObject):
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
 			test_loop_each_epoch=False
-			if test_loop_each_epoch==True or self.early_stop['signal']==True:
+			test_loop_early_epoch=5
+			if test_loop_each_epoch==True or self.early_stop['signal']==True or (test_loop_early_epoch!=None and epoch==test_loop_early_epoch):
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=False
 
@@ -2049,7 +2051,7 @@ class NetModel(NetObject):
 flag = {"data_create": 2, "label_one_hot": True}
 if __name__ == '__main__':
 	#
-	
+
 	time_measure=False
 	#if data.dataset=='seq2':
 	#	args.class_n=10
@@ -2069,8 +2071,8 @@ if __name__ == '__main__':
 		args.patience=10
 	else:
 		args.patience=15
-	
-	
+
+
 	val_set=True
 	#val_set_mode='stratified'
 	val_set_mode='stratified'
@@ -2078,10 +2080,10 @@ if __name__ == '__main__':
 
 	deb.prints(data.patches['train']['label'].shape)
 
-	
+
 	deb.prints(data.patches['train']['label'].shape)
 	deb.prints(data.patches['test']['label'].shape)
-	
+
 	test_label_unique,test_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
 	deb.prints(test_label_unique)
 	deb.prints(test_label_count)
@@ -2089,7 +2091,7 @@ if __name__ == '__main__':
 	deb.prints(train_label_unique)
 	deb.prints(train_label_count)
 	data.label_unique=test_label_unique.copy()
-	
+
 
 
 
@@ -2182,7 +2184,7 @@ if __name__ == '__main__':
 	if model_load:
 		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
 		model.test(data)
-	
+
 	if args.debug:
 		deb.prints(np.unique(data.patches['train']['label']))
 		deb.prints(data.patches['train']['label'].shape)

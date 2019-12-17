@@ -438,7 +438,7 @@ def experiments_plot(metrics,experiment_list,dataset,
 	
 	plt.show()
 
-dataset='lm'
+dataset='cv'
 load_metrics=False
 small_classes_ignore=False
 #mode='global'
@@ -632,8 +632,10 @@ if dataset=='cv':
 			]]
 	elif exp_id==6:
 		experiment_groups=[[
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
 			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-			'prediction_ConvLSTM_seq2seq_bi_predict_proba_times13.npy'
+			#'prediction_ConvLSTM_seq2seq_bi_predict_proba_times13.npy'
+			'prediction_bconvlstm_wholeinput.npy'
 			]]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']

@@ -86,4 +86,3 @@ src/repeat_results.pickle
 *.pdf
 *.csv
 *.zip
-*.ipynb

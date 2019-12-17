@@ -761,6 +761,7 @@ class NetModel(NetObject):
 		self.model_save=True
 		self.time_measure=time_measure
 		self.mp=load_obj('model_params')
+		self.input_entire_flag = True
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
 		pipe = keras.layers.BatchNormalization(axis=3)(pipe)
@@ -874,7 +875,10 @@ class NetModel(NetObject):
 
 	def build(self):
 		deb.prints(self.t_len)
-		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
+		if self.input_entire_flag=True:
+			in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n*self.t_len))
+		else:
+			in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
 		weight_decay=1E-4
 		def dilated_layer(x,filter_size,dilation_rate=1, kernel_size=3):
 			x = TimeDistributed(Conv2D(filter_size, kernel_size, padding='same',
@@ -1028,7 +1032,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, x)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(256,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -1135,6 +1139,7 @@ class NetModel(NetObject):
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+
 		if self.model_type=='pyramid_dilated':
 
 			d1 = TimeDistributed(Conv2D(16, (3, 3), padding='same',
@@ -1628,10 +1633,54 @@ class NetModel(NetObject):
 							activation='softmax', batchsize=32,input_tensor=in_im,
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
+		elif self.model_type=='ConvLSTM_seq2seq_bi_attention':
+			e_x, e_state_h, e_state_c = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				return_states=True,
+				padding="same"))(in_im)
+
+			d_x, d_state_h, d_state_c = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				return_states=True,
+				padding="same"))([in_im,e_state_h,e_state_c])
+
+
+#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#						 padding='same'))(x)
+
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			out = Activation('relu')(x)						 
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+		elif self.model_type=='ConvLSTM_seq2seq_bi_attention':
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(in_im)
+#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#						 padding='same'))(x)
+
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			out = Activation('relu')(x)						 
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+		if self.model_type=='fcn_lstm_temouri':
+			
+
+			#x = keras.layers.Permute((1,2,0,3))(in_im)
+			#x = keras.layers.Permute((2,3,1,4))(in_im)
+			
+			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=self.mp['dense']['nb_dense_block'], growth_rate=self.mp['dense']['growth_rate'], dropout_rate=0.2,
+							nb_layers_per_block=self.mp['dense']['nb_layers_per_block'], upsampling_type='deconv', classes=self.class_n, 
+							activation='softmax', batchsize=32,input_tensor=in_im,
+							recurrent_filters=128)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
-
-
 
 
 		with open('model_summary.txt','w') as fh:
@@ -1743,8 +1792,17 @@ class NetModel(NetObject):
 
 			#else:
 				#self.early_stop["signal"]=False
-			
-			
+
+	def batch_prepare_as_all_sequence_input(self,batch):			
+		#deb.prints(batch.shape[:-2]+(self.t_len*self.channel_n,))
+		#deb.prints(batch.shape)
+		batch = np.repeat(batch[:,np.newaxis,:,:,:,:],self.t_len,axis=1)
+		#deb.prints(batch.shape)
+		batch = np.transpose(batch,(0,1,3,4,5,2))
+		batch= np.reshape(batch,batch.shape[:-2]+(self.t_len*self.channel_n,))
+		#deb.prints(batch.shape)
+		
+		return batch
 	def train_loop(self, data):
 		print('Start the training')
 		cback_tboard = keras.callbacks.TensorBoard(
@@ -1804,6 +1862,12 @@ class NetModel(NetObject):
 				idx1 = (batch_id+1)*self.batch['train']['size']
 
 				batch['train']['in'] = data.patches['train']['in'][idx0:idx1]
+				# Input is 14*2 channels each
+
+				
+				if self.input_entire_flag==True:
+					batch['train']['in']=self.batch_prepare_as_all_sequence_input(batch['train']['in'])
+				
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
 				if self.time_measure==True:
 					start_time=time.time()
@@ -1832,6 +1896,10 @@ class NetModel(NetObject):
 					idx1 = (batch_id+1)*self.batch['val']['size']
 
 					batch['val']['in'] = data.patches['val']['in'][idx0:idx1]
+
+					if self.input_entire_flag==True:
+						batch['val']['in']=self.batch_prepare_as_all_sequence_input(batch['val']['in'])
+				
 					batch['val']['label'] = data.patches['val']['label'][idx0:idx1]
 
 					if self.batch_test_stats:
@@ -1885,6 +1953,11 @@ class NetModel(NetObject):
 					idx1 = (batch_id+1)*self.batch['test']['size']
 
 					batch['test']['in'] = data.patches['test']['in'][idx0:idx1]
+
+					if self.input_entire_flag==True:
+						batch['test']['in']=self.batch_prepare_as_all_sequence_input(batch['test']['in'])
+				
+
 					batch['test']['label'] = data.patches['test']['label'][idx0:idx1]
 
 					if self.batch_test_stats:

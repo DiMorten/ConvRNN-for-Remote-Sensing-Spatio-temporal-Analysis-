@@ -226,6 +226,11 @@ def experiment_groups_analyze(dataset,experiment_group,
 		print(experiment_metrics[0][0]['f1_score'])
 		#print(experiment_metrics[1][0]['f1_score'])
 
+		print("F1 per model averaged",np.asarray(
+			[experiment_metrics[int(i)][exp_id]['f1_score'] for i in range(len(experiment_metrics))]))
+		print("OA per model averaged",np.asarray(
+			[experiment_metrics[int(i)][exp_id]['overall_acc'] for i in range(len(experiment_metrics))]))
+		
 		print("exp_id",exp_id)		
 		metrics['f1_score']=np.average(np.asarray(
 			[experiment_metrics[int(i)][exp_id]['f1_score'] for i in range(len(experiment_metrics))]),
@@ -507,7 +512,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=6
+	exp_id=7
 
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -639,6 +644,13 @@ if dataset=='cv':
 			'prediction_bconvlstm_wholeinput.npy',
 			'prediction_unet_convlstm_temouri2.npy',
 			'prediction_BUnet4ConvLSTM_repeating1.npy'
+			]]
+	elif exp_id==7:
+		experiment_groups=[[
+			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
+			'prediction_BAtrousGAPConvLSTM_repeating7.npy'
 			]]
 
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']

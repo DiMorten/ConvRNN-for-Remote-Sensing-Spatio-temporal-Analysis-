@@ -20,7 +20,7 @@ KERAS_BACKEND=tensorflow
 
 
 
-id='predict_proba_times13'
+id='input_multiple'
 
 
 dataset='cv'
