@@ -1740,7 +1740,7 @@ class NetModel(NetObject):
 			# shape is (t,h,w,c). We want shape (c,h,w,t)
 			# then timedistributed conv. 1x1 applies attention to t
 			# then return 
-			def attention_weights(x)
+			def attention_weights(x):
 				att = keras.layers.Permute((4,2,3,1))(x)
 				att = TimeDistributed(Conv2D(self.t_len, (1, 1), activation=None,
 							 padding='same'))(att)
@@ -2158,7 +2158,7 @@ if __name__ == '__main__':
 
 
 	adam = Adam(lr=0.0001, beta_1=0.9)
-	adam = Adagrad(0.01)
+	#adam = Adagrad(0.01)
 	model = NetModel(epochs=args.epochs, patch_len=args.patch_len,
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
