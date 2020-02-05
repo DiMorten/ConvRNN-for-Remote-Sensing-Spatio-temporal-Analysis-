@@ -874,7 +874,9 @@ class NetModel(NetObject):
 
 	def build(self):
 		deb.prints(self.t_len)
-		in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
+		#in_im = Input(shape=(self.t_len,self.patch_len, self.patch_len, self.channel_n))
+		in_im = Input(shape=(None,self.patch_len, self.patch_len, self.channel_n))
+		
 		weight_decay=1E-4
 		def dilated_layer(x,filter_size,dilation_rate=1, kernel_size=3):
 			x = TimeDistributed(Conv2D(filter_size, kernel_size, padding='same',
@@ -1024,8 +1026,8 @@ class NetModel(NetObject):
 						 padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
 							   beta_regularizer=l2(weight_decay))(x)
-			x = Activation('relu')(x)
-			self.graph = Model(in_im, x)
+			out = Activation('relu')(x)
+			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
 			x = Bidirectional(ConvLSTM2D(256,3,return_sequences=True,
@@ -1699,6 +1701,12 @@ class NetModel(NetObject):
 										padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+
+		def cc(x):
+			return x[:,-1]
+#		    return K.backend.stack([x[:,i, :, :, i] for i in range(6)], axis=1)
+		out = Lambda(lambda y: cc(y))(out)
+		self.graph = Model(in_im, out)
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 
@@ -1876,17 +1884,19 @@ class NetModel(NetObject):
 
 				batch['train']['in'] = data.patches['train']['in'][idx0:idx1]
 				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
-				if self.time_measure==True:
-					start_time=time.time()
-				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'].astype(np.float32), 
-					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-				if self.time_measure==True:
-					batch_time=time.time()-start_time
-					print(batch_time)
-					sys.exit('Batch time:')
-			# Average epoch loss
-			self.metrics['train']['loss'] /= self.batch['train']['n']
+
+				for t_step in range(self.t_len):	
+					if self.time_measure==True:
+						start_time=time.time()
+					self.metrics['train']['loss'] += self.graph.train_on_batch(
+						batch['train']['in'][:,0:t_step+1].astype(np.float32), 
+						np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8)[:,t_step])		# Accumulated epoch
+					if self.time_measure==True:
+						batch_time=time.time()-start_time
+						print(batch_time)
+						sys.exit('Batch time:')
+					# Average epoch loss
+					self.metrics['train']['loss'] /= self.batch['train']['n']
 
 			self.train_predict=True
 			#if self.train_predict:
@@ -1909,10 +1919,11 @@ class NetModel(NetObject):
 						self.metrics['val']['loss'] += self.graph.test_on_batch(
 							batch['val']['in'].astype(np.float32), 
 							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-
-					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['val']['in'].astype(np.float32),batch_size=self.batch['val']['size'])
-				self.metrics['val']['loss'] /= self.batch['val']['n']
+					for t_step in range(self.t_len):	
+						data.patches['val']['prediction'][idx0:idx1][:,t_step]=self.graph.predict(
+							batch['val']['in'][:,0:t_step+1].astype(np.float32),batch_size=self.batch['val']['size'])*13
+					if self.batch_test_stats:		
+						self.metrics['val']['loss'] /= self.batch['val']['n']
 
 				metrics_val=data.metrics_get(data.patches['val'],debug=2)
 
@@ -1962,9 +1973,9 @@ class NetModel(NetObject):
 						self.metrics['test']['loss'] += self.graph.test_on_batch(
 							batch['test']['in'].astype(np.float32), 
 							np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-
-					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['test']['in'].astype(np.float32),batch_size=self.batch['test']['size'])*13
+					for t_step in range(self.t_len):	
+						data.patches['test']['prediction'][idx0:idx1][:,t_step]=self.graph.predict(
+							batch['test']['in'][:,0:t_step+1].astype(np.float32),batch_size=self.batch['test']['size'])*13 # 13 to get more resolution
 
 
 			#====================METRICS GET================================================#
@@ -2069,7 +2080,7 @@ if __name__ == '__main__':
 		args.patience=10
 	else:
 		args.patience=15
-	
+	args.patience=5
 	
 	val_set=True
 	#val_set_mode='stratified'

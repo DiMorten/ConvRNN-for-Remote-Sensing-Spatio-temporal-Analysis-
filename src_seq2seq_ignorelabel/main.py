@@ -30,7 +30,7 @@ from metrics import fmeasure,categorical_accuracy
 import deb
 from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label
 from keras.models import load_model
-from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D
+from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D, multiply
 from keras.utils.vis_utils import plot_model
 from keras.regularizers import l2
 import time
@@ -1697,6 +1697,70 @@ class NetModel(NetObject):
 					padding="same"),merge_mode='concat')(out)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
 										padding='same'))(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+		elif self.model_type=='ConvLSTM_seq2seq_bi_attention':
+#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#						 padding='same'))(x)
+
+			
+			# attention
+
+			# shape is (t,h,w,c). We want shape (c,h,w,t)
+			# then timedistributed conv. 1x1 applies attention to t
+			# then return 
+			x = keras.layers.Permute((4,2,3,1))(in_im)
+			x = TimeDistributed(Conv2D(self.t_len, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = Activation('relu')(x)
+			x = keras.layers.Permute((4,2,3,1))(x)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(x)
+
+			
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			out = Activation('relu')(x)
+
+#			x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+
+		elif self.model_type=='ConvLSTM_seq2seq_bi_attention2':
+#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
+#						 padding='same'))(x)
+
+			
+			# attention
+
+			# shape is (t,h,w,c). We want shape (c,h,w,t)
+			# then timedistributed conv. 1x1 applies attention to t
+			# then return 
+			def attention_weights(x)
+				att = keras.layers.Permute((4,2,3,1))(x)
+				att = TimeDistributed(Conv2D(self.t_len, (1, 1), activation=None,
+							 padding='same'))(att)
+				att = Activation('relu')(att)
+				att = keras.layers.Permute((4,2,3,1))(att)
+				return att
+			att = attention_weights(in_im)
+			x = multiply([x,att])
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+				padding="same"))(x)
+
+			
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			out = Activation('relu')(x)
+
+#			x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
+
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		#self.graph = Model(in_im, out)

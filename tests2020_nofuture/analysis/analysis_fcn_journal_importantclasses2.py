@@ -343,8 +343,8 @@ def experiments_plot(metrics,experiment_list,dataset,
 			if small_classes_ignore==True:
 				ax.set_ylim(40,87)
 			else:
-				ax.set_ylim(7,75)	
-			ax3.set_ylim(30,94)
+				ax.set_ylim(0,75)	
+			ax3.set_ylim(0,94)
 
 			ax.set_xticks(X+width/2)
 			ax.set_xticklabels(xticklabels)
@@ -395,6 +395,8 @@ def experiments_plot(metrics,experiment_list,dataset,
 		legends=('UConvLSTM','BConvLSTM','BDenseConvLSTM','BUnetConvLSTM','BAtrousConvLSTM')
 	elif experiment_id==6:
 		legends=('BConvLSTM','BConvLSTM+WholeInput','UNet_EndConvLSTM','UNet_MidConvLSTM')
+	elif experiment_id==7:
+		legends=('UConvLSTM+Attention','UConvLSTM','BConvLSTM+Attention','BConvLSTM')
 
 	#ncol=len(legends)
 	ncol=3
@@ -507,7 +509,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=6
+	exp_id=7
 
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -640,7 +642,15 @@ if dataset=='cv':
 			'prediction_unet_convlstm_temouri2.npy',
 			'prediction_BUnet4ConvLSTM_repeating1.npy'
 			]]
-
+	elif exp_id==7:
+		experiment_groups=[[
+			'prediction_ConvLSTM_seq2seq_2020_1.npy',
+			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_2020_2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_attention_attention2020.npy'
+			
+		]]
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
