@@ -507,7 +507,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=6
+	exp_id=5
 
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -624,14 +624,15 @@ if dataset=='cv':
 			'prediction_BUnet4ConvLSTM_repeating1.npy',
 			'prediction_BUnet4ConvLSTM_repeating2.npy',
 			'prediction_BUnet4ConvLSTM_repeating4.npy',
-			'prediction_BUnet5ConvLSTM_unet_one_conv_in.npy',
+			#'prediction_BUnet5ConvLSTM_unet_one_conv_in.npy',
+			'prediction_BUnet4ConvLSTM_attention_2020.npy',
 			
 			]]
 
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy'
-			]]
+		#experiment_groups=[[
+		#	'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
+		#	'prediction_ConvLSTM_seq2seq_bi_redoing3.npy'
+		#	]]
 	elif exp_id==6:
 		experiment_groups=[[
 			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
@@ -640,7 +641,22 @@ if dataset=='cv':
 			'prediction_unet_convlstm_temouri2.npy',
 			'prediction_BUnet4ConvLSTM_repeating1.npy'
 			]]
-
+	elif exp_id==7:
+		experiment_groups=[[
+			'prediction_ConvLSTM_seq2seq_2020_1.npy',
+			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_2020_2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_attention_attention2020.npy'
+			
+		]]
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_SelfAttention_attention_2020.npy',
+			'prediction_BUnet4ConvLSTM_attention_2020.npy',
+				
+		]]
+		
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',

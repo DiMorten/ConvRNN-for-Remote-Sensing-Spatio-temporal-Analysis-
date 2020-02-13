@@ -20,14 +20,15 @@ KERAS_BACKEND=tensorflow
 
 
 
-id='adam'
+id='fixing_ram'
 
 
 dataset='cv'
 #. patches_extract.sh $dataset
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi_attention' $dataset  # gonna test balancing after replication
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
+. experiment_automation.sh $id 'Unet4ConvLSTM_SelfAttention' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # gonna test balancing after replication
 
 
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication

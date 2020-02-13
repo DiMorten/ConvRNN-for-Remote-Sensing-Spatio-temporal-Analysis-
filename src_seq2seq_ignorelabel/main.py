@@ -32,9 +32,11 @@ from keras_weighted_categorical_crossentropy import weighted_categorical_crossen
 from keras.models import load_model
 from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D, multiply
 from keras.utils.vis_utils import plot_model
-from keras.regularizers import l2
+from keras.regularizers import l1,l2
 import time
 import pickle
+from keras_self_attention import SeqSelfAttention
+
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -1763,6 +1765,85 @@ class NetModel(NetObject):
 
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
+
+		if self.model_type=='BUnet4ConvLSTM_SelfAttention':
+
+			print(self.model_type)
+			#fs=32
+			fs=16
+
+			p1=dilated_layer(in_im,fs)			
+			p1=dilated_layer(p1,fs)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+			p2=dilated_layer(e1,fs*2)
+			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+			p3=dilated_layer(e2,fs*4)
+			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
+
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+					padding="same"),merge_mode='concat')(e3)
+			x = Reshape((self.t_len,
+					4*4*256))(x)
+			x = SeqSelfAttention(
+				kernel_regularizer=l2(1e-4),
+				bias_regularizer=l1(1e-4),
+				attention_regularizer_weight=1e-4,
+				name='Attention')(x)
+			x = Reshape((self.t_len,
+					4,4,256))(x)
+			d3 = transpose_layer(x,fs*4)
+			d3 = keras.layers.concatenate([d3, p3], axis=4)
+			d3=dilated_layer(d3,fs*4)
+			d2 = transpose_layer(d3,fs*2)
+			d2 = keras.layers.concatenate([d2, p2], axis=4)
+			d2=dilated_layer(d2,fs*2)
+			d1 = transpose_layer(d2,fs)
+			d1 = keras.layers.concatenate([d1, p1], axis=4)
+			out=dilated_layer(d1,fs)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+										padding='same'))(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+
+		if self.model_type=='Unet4ConvLSTM_SelfAttention':
+
+			print(self.model_type)
+			#fs=32
+			fs=16
+
+			p1=dilated_layer(in_im,fs)			
+			p1=dilated_layer(p1,fs)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+			p2=dilated_layer(e1,fs*2)
+			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+			p3=dilated_layer(e2,fs*4)
+			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
+
+			#x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
+			#		padding="same"),merge_mode='concat')(e3)
+			x = Reshape((self.t_len,
+					4*4*fs*4))(e3)
+			x = SeqSelfAttention(
+				units=256,
+				kernel_regularizer=l2(1e-4),
+				bias_regularizer=l1(1e-4),
+				attention_regularizer_weight=1e-4,
+				name='Attention')(x)
+			x = Reshape((self.t_len,
+					4,4,fs*4))(x)
+			d3 = transpose_layer(x,fs*4)
+			d3 = keras.layers.concatenate([d3, p3], axis=4)
+			d3=dilated_layer(d3,fs*4)
+			d2 = transpose_layer(d3,fs*2)
+			d2 = keras.layers.concatenate([d2, p2], axis=4)
+			d2=dilated_layer(d2,fs*2)
+			d1 = transpose_layer(d2,fs)
+			d1 = keras.layers.concatenate([d1, p1], axis=4)
+			out=dilated_layer(d1,fs)
+			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+										padding='same'))(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
 
@@ -2157,8 +2238,10 @@ if __name__ == '__main__':
 
 
 
-	adam = Adam(lr=0.0001, beta_1=0.9)
-	#adam = Adagrad(0.01)
+	#adam = Adam(lr=0.0001, beta_1=0.9)
+	#adam = Adam(lr=0.001, beta_1=0.9)
+	
+	adam = Adagrad(0.01)
 	model = NetModel(epochs=args.epochs, patch_len=args.patch_len,
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
 					 batch_size_train=args.batch_size_train,batch_size_test=args.batch_size_test,
