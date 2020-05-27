@@ -1,4 +1,5 @@
 from utils import *
+from keras.datasets import cifar10
 from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Dropout, Conv2DTranspose
 # from keras.callbacks import ModelCheckpoint , EarlyStopping
 from keras.optimizers import Adam,Adagrad 
@@ -29,13 +30,10 @@ from metrics import fmeasure,categorical_accuracy
 import deb
 from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label
 from keras.models import load_model
-from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D, multiply
+from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D
 from keras.utils.vis_utils import plot_model
-from keras.regularizers import l1,l2
+from keras.regularizers import l2
 import time
-import pickle
-from keras_self_attention import SeqSelfAttention
-
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -74,9 +72,11 @@ parser.add_argument('-path', '--path', dest='path',
 					default='../data/', help='Experiment id')
 parser.add_argument('-mdl', '--model_type', dest='model_type',
 					default='DenseNet', help='Experiment id')
-
+parser.add_argument('-wfl', '--weights_filename', dest='weights_filename',
+					default='DenseNet', help='Experiment id')
 
 args = parser.parse_args()
+
 
 if args.patch_step_test==None:
 	args.patch_step_test=args.patch_len
@@ -84,16 +84,9 @@ if args.patch_step_test==None:
 deb.prints(args.patch_step_test)
 
 def model_summary_print(s):
-	with open('model_summary.txt','w+') as f:
-		print(s, file=f)
+    with open('model_summary.txt','w+') as f:
+        print(s, file=f)
 
-
-def txt_append(filename, append_text):
-	with open(filename, "a") as myfile:
-		myfile.write(append_text)
-def load_obj(name ):
-	with open('obj/' + name + '.pkl', 'rb') as f:
-		return pickle.load(f)
 # ================= Generic class for init values =============================================== #
 class NetObject(object):
 
@@ -121,7 +114,6 @@ class NetObject(object):
 		self.report['val']['history_path']='../results/'+'history_val.txt'
 		
 		self.t_len=t_len
-
 # ================= Dataset class implements data loading, patch extraction, metric calculation and image reconstruction =======#
 class Dataset(NetObject):
 
@@ -761,7 +753,6 @@ class NetModel(NetObject):
 
 		self.model_save=True
 		self.time_measure=time_measure
-		self.mp=load_obj('model_params')
 	def transition_down(self, pipe, filters):
 		pipe = Conv2D(filters, (3, 3), strides=(2, 2), padding='same')(pipe)
 		pipe = keras.layers.BatchNormalization(axis=3)(pipe)
@@ -889,7 +880,7 @@ class NetModel(NetObject):
 			x = TimeDistributed(Conv2DTranspose(filter_size, 
 				kernel_size, strides=strides, padding='same'))(x)
 			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(x)
+			                                    beta_regularizer=l2(weight_decay))(x)
 			x = Activation('relu')(x)
 			return x		
 		def im_pooling_layer(x,filter_size):
@@ -928,11 +919,11 @@ class NetModel(NetObject):
 			if max_rate>=1:
 				x.append(dilated_layer(in_im,filter_size,1))
 			if max_rate>=2:
-				x.append(dilated_layer(in_im,filter_size,2)) #6
+				x.append(dilated_layer(in_im,filter_size,2))
 			if max_rate>=4:
-				x.append(dilated_layer(in_im,filter_size,4)) #12
+				x.append(dilated_layer(in_im,filter_size,4))
 			if max_rate>=8:
-				x.append(dilated_layer(in_im,filter_size,8)) #18
+				x.append(dilated_layer(in_im,filter_size,8))
 			if global_average_pooling==True:
 				x.append(im_pooling_layer(in_im,filter_size))
 			out = keras.layers.concatenate(x, axis=4)
@@ -1029,7 +1020,7 @@ class NetModel(NetObject):
 			self.graph = Model(in_im, x)
 			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(256,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -1103,8 +1094,8 @@ class NetModel(NetObject):
 			#x = keras.layers.Permute((2,3,1,4))(in_im)
 			
 			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
-			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=self.mp['dense']['nb_dense_block'], growth_rate=self.mp['dense']['growth_rate'], dropout_rate=0.2,
-							nb_layers_per_block=self.mp['dense']['nb_layers_per_block'], upsampling_type='deconv', classes=self.class_n, 
+			out = DenseNetFCNTimeDistributed((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=2, growth_rate=64, dropout_rate=0.2,
+							nb_layers_per_block=2, upsampling_type='deconv', classes=self.class_n, 
 							activation='softmax', batchsize=32,input_tensor=in_im,
 							recurrent_filters=128)
 			self.graph = Model(in_im, out)
@@ -1187,19 +1178,19 @@ class NetModel(NetObject):
 
 			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same'))(in_im)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(e1)
+			                                    beta_regularizer=l2(weight_decay))(e1)
 			e1 = Activation('relu')(e1)
 		elif self.model_type=='deeplabv3':
 
 			e1 = TimeDistributed(Conv2D(16, (3, 3), padding='same'))(in_im)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(e1)
+			                                    beta_regularizer=l2(weight_decay))(e1)
 			e1 = Activation('relu')(e1)
 			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
 
 			e1 = TimeDistributed(Conv2D(32, (3, 3), padding='same'))(e1)
 			e1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(e1)
+			                                    beta_regularizer=l2(weight_decay))(e1)
 			e1 = Activation('relu')(e1)
 			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
 
@@ -1208,20 +1199,20 @@ class NetModel(NetObject):
 			dil1 = TimeDistributed(Conv2D(64, (3, 3), padding='same',
 				dilation_rate=(2,2)))(e1)
 			dil1 = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(dil1)
+			                                    beta_regularizer=l2(weight_decay))(dil1)
 			dil1 = Activation('relu')(dil1)
 
 
 			dil2 = TimeDistributed(Conv2D(64, (3, 3), padding='same',
 				dilation_rate=(4,4)))(e1)
 			dil2 = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(dil2)
+			                                    beta_regularizer=l2(weight_decay))(dil2)
 			dil2 = Activation('relu')(dil2)
 
 			dil3 = TimeDistributed(Conv2D(64, (3, 3), padding='same',
 				dilation_rate=(8,8)))(e1)
 			dil3 = BatchNormalization(gamma_regularizer=l2(weight_decay),
-												beta_regularizer=l2(weight_decay))(dil3)
+			                                    beta_regularizer=l2(weight_decay))(dil3)
 			dil3 = Activation('relu')(dil3)
 
 
@@ -1342,7 +1333,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
+			        padding="same"),merge_mode='concat')(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			d3 = keras.layers.concatenate([d3, p3], axis=4)
@@ -1352,7 +1343,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			
 		if self.model_type=='BUnetConvLSTM':
 
@@ -1369,7 +1360,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
+			        padding="same"),merge_mode='concat')(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			d3 = keras.layers.concatenate([d3, p3], axis=4)
@@ -1379,7 +1370,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		if self.model_type=='BUnet3ConvLSTM':
@@ -1397,7 +1388,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
+			        padding="same"),merge_mode='concat')(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			d3 = keras.layers.concatenate([d3, p3], axis=4)
@@ -1407,7 +1398,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		if self.model_type=='BUnet4ConvLSTM':
@@ -1425,7 +1416,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
+			        padding="same"),merge_mode='concat')(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			d3 = keras.layers.concatenate([d3, p3], axis=4)
@@ -1437,7 +1428,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		if self.model_type=='BUnet5ConvLSTM':
@@ -1455,7 +1446,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
+			        padding="same"),merge_mode='concat')(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			d3 = keras.layers.concatenate([d3, p3], axis=4)
@@ -1467,7 +1458,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		if self.model_type=='BUnet2ConvLSTM':
@@ -1483,7 +1474,7 @@ class NetModel(NetObject):
 			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e2)
+			        padding="same"),merge_mode='concat')(e2)
 
 			d2 = transpose_layer(x,fs*4)
 			d2 = keras.layers.concatenate([d2, p2], axis=4)
@@ -1491,7 +1482,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		if self.model_type=='UnetTimeDistributed':
@@ -1519,7 +1510,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 
@@ -1535,11 +1526,11 @@ class NetModel(NetObject):
 				global_average_pooling=False)
 			
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(x)
+			        padding="same"),merge_mode='concat')(x)
 
 			#out=dilated_layer(x,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(x)
+			                            padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='BAtrousGAPConvLSTM':
@@ -1554,11 +1545,11 @@ class NetModel(NetObject):
 				global_average_pooling=True)
 			
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(x)
+			        padding="same"),merge_mode='concat')(x)
 
 			out=dilated_layer(x,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='BUnetAtrousConvLSTM':
@@ -1574,7 +1565,7 @@ class NetModel(NetObject):
 			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
+			        padding="same"),merge_mode='concat')(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			d3 = keras.layers.concatenate([d3, p3], axis=4)
@@ -1584,7 +1575,7 @@ class NetModel(NetObject):
 			d1 = keras.layers.concatenate([d1, p1], axis=4)
 			out=dilated_layer(d1,fs)
 			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
+			                            padding='same'))(out)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
 		elif self.model_type=='BUnetAtrousConvLSTM_v3p':
@@ -1617,319 +1608,9 @@ class NetModel(NetObject):
 						 padding='same'))(x)
 			self.graph = Model(in_im, out)
 			print(self.graph.summary())
-		elif self.model_type=='Attention_DenseNetTimeDistributed_128x2':
-
-
-			#x = keras.layers.Permute((1,2,0,3))(in_im)
-			#x = keras.layers.Permute((2,3,1,4))(in_im)
-			
-			#x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
-			out = DenseNetFCNTimeDistributedAttention((self.t_len, self.patch_len, self.patch_len, self.channel_n), nb_dense_block=self.mp['dense']['nb_dense_block'], growth_rate=self.mp['dense']['growth_rate'], dropout_rate=0.2,
-							nb_layers_per_block=self.mp['dense']['nb_layers_per_block'], upsampling_type='deconv', classes=self.class_n, 
-							activation='softmax', batchsize=32,input_tensor=in_im,
-							recurrent_filters=128)
-			self.graph = Model(in_im, out)
-
-
-		if self.model_type=='fcn_lstm_temouri':
-
-
-			#fs=32
-			fs=64
-
-			#e1=dilated_layer(in_im,fs)			
-			e1=dilated_layer(in_im,fs) # 64
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e1)
-			e2=dilated_layer(e2,fs*2) # 128
-			deb.prints(K.int_shape(e2))
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e2)
-			e3=dilated_layer(e3,fs*4) # 256
-			deb.prints(K.int_shape(e3))
-
-			e4 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(e3)
-
-
-			e4=dilated_layer(e4,fs*8) # 512
-
-			d3 = transpose_layer(e4,fs*4) #  256
-			deb.prints(K.int_shape(d3))
-
-			d3 = keras.layers.concatenate([d3, e3], axis=4) # 512
-			d3=dilated_layer(d3,fs*4) # 256
-			d2 = transpose_layer(d3,fs*2) # 128
-			deb.prints(K.int_shape(d2))
-			d2 = keras.layers.concatenate([d2, e2], axis=4) # 256
-			d2=dilated_layer(d2,fs*2) # 128
-			d1 = transpose_layer(d2,fs) # 64
-			d1 = keras.layers.concatenate([d1, e1], axis=4) # 128
-			d1=dilated_layer(d1,fs) # 64 # this would concatenate with the date
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(d1)			
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(x)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		if self.model_type=='fcn_lstm_temouri2':
-
-
-			#fs=32
-			fs=16
-
-			p1=dilated_layer(in_im,fs)			
-			p1=dilated_layer(p1,fs)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-			p2=dilated_layer(e1,fs*2)
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-			p3=dilated_layer(e2,fs*4)
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
-
-			x=dilated_layer(e3,fs*8)
-
-			d3 = transpose_layer(x,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=4)
-			d3=dilated_layer(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=4)
-			d2=dilated_layer(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=4)
-			out=dilated_layer(d1,fs)
-			out = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(out)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-# ==================================== ATTENTION ATTEMPTS =================================== #
-		elif self.model_type=='ConvLSTM_seq2seq_bi_attention':
-#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-#						 padding='same'))(x)
-
-			
-			# attention
-
-			# shape is (t,h,w,c). We want shape (c,h,w,t)
-			# then timedistributed conv. 1x1 applies attention to t
-			# then return 
-			x = keras.layers.Permute((4,2,3,1))(in_im)
-			x = TimeDistributed(Conv2D(self.t_len, (1, 1), activation=None,
-						 padding='same'))(x)
-			x = Activation('relu')(x)
-			x = keras.layers.Permute((4,2,3,1))(x)
-
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-				padding="same"))(x)
-
-			
-			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-						 padding='same'))(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-							   beta_regularizer=l2(weight_decay))(x)
-			out = Activation('relu')(x)
-
-#			x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
-
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-
-		elif self.model_type=='ConvLSTM_seq2seq_bi_attention2':
-#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-#						 padding='same'))(x)
-
-			
-			# attention
-
-			# shape is (t,h,w,c). We want shape (c,h,w,t)
-			# then timedistributed conv. 1x1 applies attention to t
-			# then return 
-			def attention_weights(x):
-				att = keras.layers.Permute((4,2,3,1))(x)
-				att = TimeDistributed(Conv2D(self.t_len, (1, 1), activation=None,
-							 padding='same'))(att)
-				att = Activation('relu')(att)
-				att = keras.layers.Permute((4,2,3,1))(att)
-				return att
-			att = attention_weights(in_im)
-			x = multiply([x,att])
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-				padding="same"))(x)
-
-			
-			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-						 padding='same'))(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-							   beta_regularizer=l2(weight_decay))(x)
-			out = Activation('relu')(x)
-
-#			x = Reshape((self.patch_len, self.patch_len,self.t_len*self.channel_n), name='predictions')(x)
-
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		elif self.model_type=='ConvLSTM_seq2seq_bi_SelfAttention':
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-				padding="same"))(in_im)
-#			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
-#						 padding='same'))(x)
-			x = Reshape((self.t_len,
-					32*32*256))(x)
-			x = SeqSelfAttention(
-				kernel_regularizer=l2(1e-4),
-				bias_regularizer=l1(1e-4),
-				attention_regularizer_weight=1e-4,
-				name='Attention')(x)
-			x = Reshape((self.t_len,
-					32,32,256))(x)
-			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-						 padding='same'))(x)
-			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-							   beta_regularizer=l2(weight_decay))(x)
-			out = Activation('relu')(x)						 
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-		if self.model_type=='BUnet4ConvLSTM_SelfAttention':
-
-			print(self.model_type)
-			#fs=32
-			fs=16
-
-			p1=dilated_layer(in_im,fs)			
-			p1=dilated_layer(p1,fs)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-			p2=dilated_layer(e1,fs*2)
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-			p3=dilated_layer(e2,fs*4)
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
-
-			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-					padding="same"),merge_mode='concat')(e3)
-			x = Reshape((self.t_len,
-					4*4*256))(x)
-			x = SeqSelfAttention(
-				kernel_regularizer=l2(1e-4),
-				bias_regularizer=l1(1e-4),
-				attention_regularizer_weight=1e-4,
-				name='Attention')(x)
-			x = Reshape((self.t_len,
-					4,4,256))(x)
-			d3 = transpose_layer(x,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=4)
-			d3=dilated_layer(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=4)
-			d2=dilated_layer(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=4)
-			out=dilated_layer(d1,fs)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-
-		if self.model_type=='Unet4ConvLSTM_SelfAttention':
-
-			print(self.model_type)
-			#fs=32
-			fs=16
-
-			p1=dilated_layer(in_im,fs)			
-			p1=dilated_layer(p1,fs)
-			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
-			p2=dilated_layer(e1,fs*2)
-			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
-			p3=dilated_layer(e2,fs*4)
-			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
-
-			#x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
-			#		padding="same"),merge_mode='concat')(e3)
-			x = Reshape((self.t_len,
-					4*4*fs*4))(e3)
-			x = SeqSelfAttention(
-				units=256,
-				kernel_regularizer=l2(1e-4),
-				bias_regularizer=l1(1e-4),
-				attention_regularizer_weight=1e-4,
-				name='Attention')(x)
-			x = Reshape((self.t_len,
-					4,4,fs*4))(x)
-			d3 = transpose_layer(x,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=4)
-			d3=dilated_layer(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=4)
-			d2=dilated_layer(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=4)
-			out=dilated_layer(d1,fs)
-			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
-										padding='same'))(out)
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
-
-		if self.model_type=='BUnet4_Standalone':
-			print(self.model_type)
-			in_shape = (self.t_len,self.patch_len, self.patch_len, self.channel_n)
-			#in_im = Input(shape=in_shape)
-
-			#x = Permute((1,2,3,0), input_shape = in_shape)(in_im)
-			x = Permute((2,3,4,1), input_shape = in_shape)(in_im)
-
-			#my_permute = lambda y: K.permute_dimensions(y, (None,1,2,3,0))
-			#x = Lambda(my_permute)(in_im)
-			x = Reshape((self.patch_len,self.patch_len,self.channel_n*self.t_len))(x)
-			#fs=32
-			def conv_layer(x,filter_size,dilation_rate=1, kernel_size=3):
-				x = Conv2D(filter_size, kernel_size, padding='same',
-					dilation_rate=(dilation_rate, dilation_rate))(x)
-				x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-								beta_regularizer=l2(weight_decay))(x)
-				x = Activation('relu')(x)
-				return x		
-			def transpose_layer(x,filter_size,dilation_rate=1, 
-				kernel_size=3, strides=(2,2)):
-				x = Conv2DTranspose(filter_size, 
-					kernel_size, strides=strides, padding='same')(x)
-				x = BatchNormalization(gamma_regularizer=l2(weight_decay),
-													beta_regularizer=l2(weight_decay))(x)
-				x = Activation('relu')(x)
-				return x		
-			fs=16
-
-			p1=conv_layer(x,fs)			
-			p1=conv_layer(p1,fs)
-			e1 = AveragePooling2D((2, 2), strides=(2, 2))(p1)
-			p2=conv_layer(e1,fs*2)
-			e2 = AveragePooling2D((2, 2), strides=(2, 2))(p2)
-			p3=conv_layer(e2,fs*4)
-			e3 = AveragePooling2D((2, 2), strides=(2, 2))(p3)
-
-			# This replaces convlstm. Check param count and increase filters if lacking
-			x = conv_layer(e3, fs*16)
-
-			d3 = transpose_layer(x,fs*4)
-			d3 = keras.layers.concatenate([d3, p3], axis=3)
-			d3=conv_layer(d3,fs*4)
-			d2 = transpose_layer(d3,fs*2)
-			d2 = keras.layers.concatenate([d2, p2], axis=3)
-			d2=conv_layer(d2,fs*2)
-			d1 = transpose_layer(d2,fs)
-			d1 = keras.layers.concatenate([d1, p1], axis=3)
-			out=conv_layer(d1,fs)
-			out = Conv2D(self.class_n*self.t_len, (1, 1), activation=None,
-										padding='same')(out)
-			#deb.prints(out.output_shape)
-			out_shape = (self.patch_len,self.patch_len,self.class_n,self.t_len)
-			out = Reshape(out_shape)(out)
-
-			#my_permute = lambda x: K.permute_dimensions(out, (None,3,0,1,2))
-			#out = Lambda(my_permute)(x)
-
-			#out = Permute((3,0,1,2), input_shape=out_shape)(out)
-			out = Permute((4,1,2,3), input_shape=out_shape)(out)
-
-			self.graph = Model(in_im, out)
-			print(self.graph.summary())
 		#self.graph = Model(in_im, out)
 		print(self.graph.summary(line_length=125))
+
 
 
 
@@ -2024,6 +1705,17 @@ class NetModel(NetObject):
 		deb.prints(data.patches['train']['batch_n'])
 
 		self.train_loop(data)
+	def test(self, data):
+
+
+		# Computing the number of batches
+		data.patches['train']['batch_n'] = data.patches['train']['in'].shape[0]//self.batch['train']['size']
+		data.patches['test']['batch_n'] = data.patches['test']['in'].shape[0]//self.batch['test']['size']
+		data.patches['val']['batch_n'] = data.patches['val']['in'].shape[0]//self.batch['val']['size']
+
+		deb.prints(data.patches['train']['batch_n'])
+
+		self.train_loop(data)
 
 	def early_stop_check(self,metrics,epoch,most_important='overall_acc'):
 
@@ -2095,86 +1787,17 @@ class NetModel(NetObject):
 
 			# Random shuffle the data
 			##data.patches['train']['in'], data.patches['train']['label'] = shuffle(data.patches['train']['in'], data.patches['train']['label'])
-
-			#=============================TRAIN LOOP=========================================#
-			for batch_id in range(0, self.batch['train']['n']):
-				
-				idx0 = batch_id*self.batch['train']['size']
-				idx1 = (batch_id+1)*self.batch['train']['size']
-
-				batch['train']['in'] = data.patches['train']['in'][idx0:idx1]
-				batch['train']['label'] = data.patches['train']['label'][idx0:idx1]
-				if self.time_measure==True:
-					start_time=time.time()
-				self.metrics['train']['loss'] += self.graph.train_on_batch(
-					batch['train']['in'].astype(np.float32), 
-					np.expand_dims(batch['train']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-				if self.time_measure==True:
-					batch_time=time.time()-start_time
-					print(batch_time)
-					sys.exit('Batch time:')
-			# Average epoch loss
-			self.metrics['train']['loss'] /= self.batch['train']['n']
-
 			self.train_predict=True
 			#if self.train_predict:
 
 
 
-			#================== VAL LOOP=====================#
-			if self.val_set:
-				data.patches['val']['prediction']=np.zeros_like(data.patches['val']['label'][:,:,:,:,:-1])
-				self.batch_test_stats=False
-
-				for batch_id in range(0, self.batch['val']['n']):
-					idx0 = batch_id*self.batch['val']['size']
-					idx1 = (batch_id+1)*self.batch['val']['size']
-
-					batch['val']['in'] = data.patches['val']['in'][idx0:idx1]
-					batch['val']['label'] = data.patches['val']['label'][idx0:idx1]
-
-					if self.batch_test_stats:
-						self.metrics['val']['loss'] += self.graph.test_on_batch(
-							batch['val']['in'].astype(np.float32), 
-							np.expand_dims(batch['val']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
-
-					data.patches['val']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['val']['in'].astype(np.float32),batch_size=self.batch['val']['size'])
-				self.metrics['val']['loss'] /= self.batch['val']['n']
-
-				metrics_val=data.metrics_get(data.patches['val'],debug=2)
-
-				self.early_stop_check(metrics_val,epoch)
-				#if epoch==1000 or epoch==700 or epoch==500 or epoch==1200:
-				#	self.early_stop['signal']=True
-				#else:
-				#	self.early_stop['signal']=False
-				#if self.early_stop['signal']==True:
-				#	self.graph.save('model_'+str(epoch)+'.h5')
-
-				metrics_val['per_class_acc'].setflags(write=1)
-				metrics_val['per_class_acc'][np.isnan(metrics_val['per_class_acc'])]=-1
-				print(metrics_val['per_class_acc'])
-				
-				# if epoch % 5 == 0:
-				# 	print("Writing val...")
-				# 	#print(txt['val']['metrics'])
-				# 	for i in range(len(txt['val']['metrics'])):
-				# 		data.metrics_write_to_txt(txt['val']['metrics'][i],np.squeeze(txt['val']['loss'][i]),
-				# 			txt['val']['epoch'][i],path=self.report['val']['history_path'])
-				# 	txt['val']['metrics']=[]
-				# 	txt['val']['loss']=[]
-				# 	txt['val']['epoch']=[]
-				# else:
-				# 	txt['val']['metrics'].append(metrics_val)
-				# 	txt['val']['loss'].append(self.metrics['val']['loss'])
-				# 	txt['val']['epoch'].append(epoch)
-
 			
 			#==========================TEST LOOP================================================#
-			if self.early_stop['signal']==True:
-				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			#if self.early_stop['signal']==True:
+			#	self.graph.load_weights('weights_best.h5')
+			test_loop_each_epoch=True
+			test_time0=time.time()
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=False
@@ -2192,9 +1815,9 @@ class NetModel(NetObject):
 							np.expand_dims(batch['test']['label'].argmax(axis=4),axis=4).astype(np.int8))		# Accumulated epoch
 
 					data.patches['test']['prediction'][idx0:idx1]=self.graph.predict(
-						batch['test']['in'].astype(np.float32),batch_size=self.batch['test']['size'])*13
-
-
+						batch['test']['in'].astype(np.float32),batch_size=self.batch['test']['size'])
+			print("Inference time:",time.time()-test_time0)
+			sys.exit('Measurement finished')
 			#====================METRICS GET================================================#
 			deb.prints(data.patches['test']['label'].shape)		
 			deb.prints(idx1)
@@ -2217,11 +1840,7 @@ class NetModel(NetObject):
 			if self.early_stop["signal"]==True:
 				self.early_stop['best_predictions']=data.patches['test']['prediction']
 				print("EARLY STOP EPOCH",epoch,metrics)
-				training_time=round(time.time()-init_time,2)
-				print("Training time",training_time)
-				metadata = "Timestamp:"+ str(round(time.time(),2))+". Model: "+self.model_type+". Training time: "+str(training_time)+"\n"
-				print(metadata)
-				txt_append("metadata.txt",metadata)
+				print("Training time",time.time()-init_time)
 				np.save("prediction.npy",self.early_stop['best_predictions'])
 				np.save("labels.npy",data.patches['test']['label'])
 				break
@@ -2321,9 +1940,7 @@ if __name__ == '__main__':
 
 
 
-	#adam = Adam(lr=0.0001, beta_1=0.9)
-	#adam = Adam(lr=0.001, beta_1=0.9)
-	
+	adam = Adam(lr=0.0001, beta_1=0.9)
 	adam = Adagrad(0.01)
 	model = NetModel(epochs=args.epochs, patch_len=args.patch_len,
 					 patch_step_train=args.patch_step_train, eval_mode=args.eval_mode,
@@ -2341,7 +1958,7 @@ if __name__ == '__main__':
 	if val_set:
 		data.val_set_get(val_set_mode,0.15)
 		deb.prints(data.patches['val']['label'].shape)
-	balancing=True
+	balancing=False
 	if balancing==True:
 
 		
@@ -2410,10 +2027,12 @@ if __name__ == '__main__':
 				  optimizer=adam, metrics=metrics,loss_weights=model.loss_weights)
 	model_load=False
 	if model_load:
-		model=load_model('/home/lvc/Documents/Jorg/sbsr/fcn_model/results/seq2_true_norm/models/model_1000.h5')
-		model.test(data)
+		print("=========== LOADING MODEL ============")
+		deb.prints(args.weights_filename)
+		model.graph.load_weights(args.weights_filename)
+	model.test(data)
 	
 	if args.debug:
 		deb.prints(np.unique(data.patches['train']['label']))
 		deb.prints(data.patches['train']['label'].shape)
-	model.train(data)
+	#model.test(data)

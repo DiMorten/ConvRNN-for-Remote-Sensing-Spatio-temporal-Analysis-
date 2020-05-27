@@ -87,3 +87,5 @@ src/repeat_results.pickle
 *.csv
 *.zip
 *.ipynb
+*lock*
+*.csv*

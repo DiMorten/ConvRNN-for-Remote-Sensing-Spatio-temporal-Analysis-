@@ -397,12 +397,6 @@ def experiments_plot(metrics,experiment_list,dataset,
 		legends=('BConvLSTM','BConvLSTM+WholeInput','UNet_EndConvLSTM','UNet_MidConvLSTM')
 	elif experiment_id==6:
 		legends=('BUnetConvLSTM','BUnetConvLSTM','BUnetConvLSTM','BUnetConvLSTM+Attention')
-	elif experiment_id==7:
-		legends=('BUnetConvLSTM','BUnetConvLSTM','BUnetConvLSTM','BUnetConvLSTM+Self attention','Self attention')
-	elif experiment_id==8:
-		legends=('BConvLSTM','BConvLSTM','BConvLSTM','BConvLSTM','BConvLSTM','BConvLSTM_SelfAttention','BConvLSTM_SelfAttention')
-	elif experiment_id==8:
-		legends=('BUnetConvlSTM','BUnetStandalone')
 
 	#ncol=len(legends)
 	ncol=3
@@ -515,7 +509,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=7 # 4 for thesis and journal
+	exp_id=5
 
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -660,31 +654,11 @@ if dataset=='cv':
 		]]
 		experiment_groups=[[
 			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
 			'prediction_BUnet4ConvLSTM_SelfAttention_attention_2020.npy',
-			#'prediction_BUnet4ConvLSTM_attention_2020.npy',
-			'prediction_Unet4ConvLSTM_SelfAttention_attention_2020.npy',
+			'prediction_BUnet4ConvLSTM_attention_2020.npy',
 				
 		]]
-	elif exp_id==8:
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-			'prediction_ConvLSTM_seq2seq_bi_SelfAttention_selfattention.npy',
-			'prediction_ConvLSTM_seq2seq_bi_SelfAttention_selfattention2.npy',
-
-				
-		]]			
-	elif exp_id==9:
-		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4_Standalone_noconvlstm.npy'
-				
-		]]	
+		
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
@@ -707,7 +681,7 @@ elif dataset=='lm':
 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy'],]
-	exp_id=4 # choose 4 for thesis and journal paper
+	exp_id=7
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
 			'prediction_deeplab_rs_multiscale_v3plus2.npy',

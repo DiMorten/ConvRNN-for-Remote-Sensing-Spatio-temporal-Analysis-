@@ -12,18 +12,16 @@ from sklearn.metrics import confusion_matrix,f1_score,accuracy_score,classificat
 from sklearn.externals import joblib
 import matplotlib.pyplot as plt
 import pandas as pd
-import pdb
-import deb
 #====================================
 def labels_predictions_filter_transform(label_test,predictions,class_n,
 		debug=1):
-	#predictions=predictions.argmax(axis=np.ndim(predictions)-1)
+	predictions=predictions.argmax(axis=np.ndim(predictions)-1)
 	predictions=np.reshape(predictions,-1)
-	#label_test=label_test.argmax(axis=np.ndim(label_test)-1)
+	label_test=label_test.argmax(axis=np.ndim(label_test)-1)
 	label_test=np.reshape(label_test,-1)
-	#predictions=predictions[label_test<class_n]
+	predictions=predictions[label_test<class_n]
 
-	#label_test=label_test[label_test<class_n]
+	label_test=label_test[label_test<class_n]
 	if debug>0:
 		print("Predictions",predictions.shape)
 		print("Label_test",label_test.shape)
@@ -113,10 +111,10 @@ def experiment_analyze(dataset='cv',
 		prediction_filename='prediction_DenseNetTimeDistributed_blockgoer.npy',
 		mode='each_date',debug=1):
 	path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/'+dataset+'/'
-	path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/viterbi_npy/npy_spatialized_results/'
+
 	prediction_path=path+prediction_filename
-	predictions=np.load(prediction_path)-1
-	label_test=np.load(path+'label_'+dataset+'.npy')-1
+	predictions=np.load(prediction_path)
+	label_test=np.load(path+'labels.npy')
 	if debug>0:
 		print(predictions.shape)
 		print(label_test.shape)
@@ -125,15 +123,15 @@ def experiment_analyze(dataset='cv',
 	if mode=='each_date':
 		metrics_t={'f1_score':[],'overall_acc':[],
 			'average_acc':[]}
-		label_test_v=label_test.flatten()
-		#label_test_v=label_test_v[label_test_v<class_n]
+		label_test_v=label_test.argmax(axis=4).flatten()
+		label_test_v=label_test_v[label_test_v<class_n]
 
 		label_unique=np.unique(label_test_v)
 		print("label_unique",label_unique)
 		labels_unique_t=[]
 		for t in range(label_test.shape[1]):
-			predictions_t = predictions[:,t]
-			label_test_t = label_test[:,t]
+			predictions_t = predictions[:,t,:,:,:]
+			label_test_t = label_test[:,t,:,:,:]
 
 			label_test_t,predictions_t = labels_predictions_filter_transform(
 				label_test_t, predictions_t, class_n=class_n,
@@ -142,7 +140,7 @@ def experiment_analyze(dataset='cv',
 				predictions_t).shape)
 			print("label_test_t",np.unique(
 				label_test_t).shape)
-			print("HERE")
+
 			label_unique_t=np.unique(label_test_t)
 			predictions_unique_t=np.unique(predictions_t)
 			classes_t = np.unique(np.concatenate((label_unique_t,predictions_unique_t),0))
@@ -200,7 +198,7 @@ def experiments_analyze(dataset,experiment_list,mode='each_date'):
 def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 	save=True
 	if save==True:	
-		print("[@experiment_groups_analyze] Experiments:",experiment_group)
+
 		experiment_metrics=[]
 		for group in experiment_group:
 			group_metrics=[]
@@ -212,14 +210,12 @@ def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 					mode=mode,debug=0))
 			experiment_metrics.append(group_metrics)
 
-
 	#	for model_id in range(len(experiment_metrics[0])):
 	#		for date_id in range(len(experiment_metrics[0][model_id]):
 
 		np.save('experiment_metrics.npy',experiment_metrics)
 	else:
 		experiment_metrics=np.load('experiment_metrics.npy')
-	print("[@experiment_groups_analyze] Experiment metrics len",len(experiment_metrics))
 	metrics={}
 	total_metrics=[]
 
@@ -245,8 +241,6 @@ def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 			print("1",len(experiment_metrics[0]))
 			print("2",len(experiment_metrics[0][0]))
 			print("3",len(experiment_metrics[0][0]['f1_score'][0])) # class f1 score for the first date
-			deb.prints(exp_id)
-			#pdb.set_trace()
 			print("4",experiment_metrics[0][exp_id]['f1_score'][date_id].shape) # class f1 score for the first date
 			print("4",experiment_metrics[1][exp_id]['f1_score'][date_id].shape) # class f1 score for the first date
 			
@@ -295,7 +289,7 @@ def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 		metrics['f1_score']*=100
 		print("Exp id",experiment_group[0][exp_id])
 		np.savetxt(
-			"averaged_metrics_"+dataset+"_"+experiment_group[0][exp_id]+"viterbi.csv",
+			"averaged_metrics_"+dataset+"_"+experiment_group[0][exp_id]+".csv",
 			np.transpose(metrics['f1_score']), delimiter=",",fmt='%1.1f')
 	print("metrics['f1_score'].shape",metrics['f1_score'].shape)
 	print("total merics len",len(metrics))
@@ -305,7 +299,7 @@ def experiment_groups_analyze(dataset,experiment_group,mode='each_date'):
 def experiments_plot(metrics,experiment_list,dataset):
 
 
-	print(metrics)
+
 	t_len=len(metrics[0]['f1_score'])
 	print("t_len",t_len)
 	indices = range(t_len) # t_len
@@ -373,51 +367,23 @@ load_metrics=False
 #mode='global'
 mode='each_date'
 if dataset=='cv':
-# 	experiment_groups=[[
-# 		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-# 		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-# ##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-# 		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-
-# 		['prediction_ConvLSTM_seq2seq_redoing.npy',
-# 		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-# 		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
-
-# 		['prediction_ConvLSTM_seq2seq_redoingz.npy',
-# 		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-# 		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
-# 		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-# 		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-# 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 	experiment_groups=[[
-		'predictions_cv_ConvLSTM_seq2seq_batch16_full.npy',
-		'predictions_cv_ConvLSTM_seq2seq_bi_batch16_full.npy',
-		'predictions_cv_DenseNetTimeDistributed_128x2_batch16_full.npy',
-		'predictions_cv_BUnet4ConvLSTM_repeating1.npy',
-		'predictions_cv_BAtrousGAPConvLSTM_raulapproved.npy',
-		],
+		'prediction_pyramid_dilated_bconvlstm_dilated.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_dilated.npy',
+##		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
 
-		['predictions_cv_ConvLSTM_seq2seq_redoing.npy',
-		'predictions_cv_ConvLSTM_seq2seq_bi_redoing.npy',
-		'predictions_cv_DenseNetTimeDistributed_128x2_redoing.npy',
-		'predictions_cv_BUnet4ConvLSTM_repeating1.npy',
-		'predictions_cv_BAtrousGAPConvLSTM_raulapproved.npy',
+		['prediction_pyramid_dilated_bconvlstm_dilated.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_dilated2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
 
-		],
-		['predictions_cv_ConvLSTM_seq2seq_redoingz.npy',
-		'predictions_cv_ConvLSTM_seq2seq_bi_redoingz.npy',
-		'predictions_cv_DenseNetTimeDistributed_128x2_redoingz2.npy',
-		'predictions_cv_BUnet4ConvLSTM_repeating2.npy',
-		'predictions_cv_BAtrousGAPConvLSTM_repeating3.npy',
+		['prediction_pyramid_dilated_bconvlstm_dilated.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_dilated2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_pyramid_dilated_bconvlstm_dilated.npy',
+		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_dilated.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 
-		],
-		['predictions_cv_ConvLSTM_seq2seq_redoingz2.npy',
-		'predictions_cv_ConvLSTM_seq2seq_bi_redoingz2.npy',
-		'predictions_cv_DenseNetTimeDistributed_128x2_redoing3.npy',
-		'predictions_cv_BUnet4ConvLSTM_repeating4.npy',
-		'predictions_cv_BAtrousGAPConvLSTM_repeating4.npy',
-		]]
-		
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',
@@ -427,50 +393,25 @@ if dataset=='cv':
 		#'prediction_DenseNetTimeDistributed_128x2_filtersizefix2.npy']
 elif dataset=='lm':
 
-	# experiment_groups=[[
-	# 	'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-	# 	'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-	# 	'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
-	# 	['prediction_ConvLSTM_seq2seq_redoing.npy',
-	# 	'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-	# 	'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
-	# 	['prediction_ConvLSTM_seq2seq_redoingz.npy',
-	# 	'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-	# 	'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
-	# 	['prediction_ConvLSTM_seq2seq_redoingz2.npy',
-	# 	'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-	# 	'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
 	experiment_groups=[[
-			'predictions_lm_ConvLSTM_seq2seq_batch16_full.npy',
-			'predictions_lm_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'predictions_lm_DenseNetTimeDistributed_128x2_batch16_full.npy',
-			'predictions_lm_BUnet4ConvLSTM_repeating1.npy',
-			'predictions_lm_BAtrousGAPConvLSTM_raulapproved.npy',
-			],
-			['predictions_lm_ConvLSTM_seq2seq_redoing.npy',
-			'predictions_lm_ConvLSTM_seq2seq_bi_redoing.npy',
-			'predictions_lm_DenseNetTimeDistributed_128x2_redoing.npy',
-			'predictions_lm_BUnet4ConvLSTM_repeating2.npy',
-			'predictions_lm_BAtrousGAPConvLSTM_repeating6.npy',
-			],
-			['predictions_lm_ConvLSTM_seq2seq_redoingz.npy',
-			'predictions_lm_ConvLSTM_seq2seq_bi_redoingz.npy',
-			'predictions_lm_DenseNetTimeDistributed_128x2_redoingz.npy',
-			'predictions_lm_BUnet4ConvLSTM_repeating4.npy',
-			'predictions_lm_BAtrousGAPConvLSTM_repeating4.npy',
-			],
-			['predictions_lm_ConvLSTM_seq2seq_redoingz2.npy',
-			'predictions_lm_ConvLSTM_seq2seq_bi_redoingz2.npy',
-			'predictions_lm_DenseNetTimeDistributed_128x2_redoingz2.npy',
-			'predictions_lm_BUnet4ConvLSTM_repeating6.npy',
-			'predictions_lm_BAtrousGAPConvLSTM_repeating3.npy',
-			]]
+		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+		'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+		'prediction_DenseNetTimeDistributed_128x2_batch16_full.npy'],
+		['prediction_ConvLSTM_seq2seq_redoing.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoing.npy'],
+		['prediction_ConvLSTM_seq2seq_redoingz.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz.npy'],
+		['prediction_ConvLSTM_seq2seq_redoingz2.npy',
+		'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
+
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode)
-	print("Saving npy metrics....")
 	np.save("experiment_metrics_"+dataset+".npy",experiment_metrics)
-	#pdb.set_trace()
+
 else:
 	experiment_metrics=np.load("experiment_metrics_"+dataset+".npy")
 

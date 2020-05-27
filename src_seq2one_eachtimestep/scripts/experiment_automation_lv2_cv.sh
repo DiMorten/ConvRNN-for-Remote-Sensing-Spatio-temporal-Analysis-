@@ -20,26 +20,13 @@ KERAS_BACKEND=tensorflow
 
 
 
-id='dummy'
+id='first7images'
 
 
 dataset='cv'
 #. patches_extract.sh $dataset
-#. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
-
-
-# ======================== ATTENTION MODELS ======================================= #
-##. experiment_automation.sh $id 'Unet4ConvLSTM_SelfAttention' $dataset  # gonna test balancing after replication
-#. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi_SelfAttention' $dataset  # gonna test balancing after replication
-
-#======================== BUNET NO CONVLSTM ======================================= #
-
-#. experiment_automation.sh $id 'BUnet4_Standalone' $dataset  # gonna test balancing after replication
-
-# ======================== REGULAR BUNET WITH ADAM
-id='adam'
-
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+#======================== REGULAR BUNETCONVLSTM ======================================= #
+. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset
 
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
 
