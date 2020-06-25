@@ -20,13 +20,19 @@ KERAS_BACKEND=tensorflow
 
 
 
-id='first7images'
+#id='first7images'
 
 
 dataset='cv'
 #. patches_extract.sh $dataset
 #======================== REGULAR BUNETCONVLSTM ======================================= #
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset
+#id='first7images4'
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset
+id='first5images3'
+t_step=5
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset $t_step
+. experiment_automation.sh $id 'Unet4ConvLSTM' $dataset $t_step
 
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
 

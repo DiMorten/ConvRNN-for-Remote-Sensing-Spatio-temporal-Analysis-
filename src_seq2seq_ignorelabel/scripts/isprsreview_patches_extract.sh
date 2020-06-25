@@ -14,7 +14,7 @@ then
 	t_len=14
 	im_h=8492
 	im_w=7995
-	class_n=12 #11+bcknd 
+	class_n=10 #11+bcknd 
 else
 	dataset_path="../lm_data/"
 	t_len=13
@@ -25,8 +25,7 @@ fi
 
 # ==== EXTRACT PATCHES
 cd ~/Jorg/deep_learning/LSTM-Final-Project/src_seq2seq
-python patches_store.py -ttmn="TrainTestMask.tif" -mm="ram" --debug=1 -pl 32 -po 0 -ts 0 -tnl 10000 -bs=5000 --batch_size=128 --filters=256 -m="smcnn_semantic" --phase="repeat" -sc=False --class_n=$class_n --log_dir="../data/summaries/" --path="${dataset_path}" --im_h=$im_h --im_w=$im_w --band_n=2 --t_len=$t_len --id_first=1 -tof=False -nap=10000 -psv=True
-#python patches_store.py -ttmn="TrainTestMaskISPRSReview.png" -mm="ram" --debug=1 -pl 32 -po 0 -ts 0 -tnl 10000 -bs=5000 --batch_size=128 --filters=256 -m="smcnn_semantic" --phase="repeat" -sc=False --class_n=$class_n --log_dir="../data/summaries/" --path="${dataset_path}" --im_h=$im_h --im_w=$im_w --band_n=2 --t_len=$t_len --id_first=1 -tof=False -nap=10000 -psv=True
+python patches_store.py -ttmn="TrainTestMaskISPRSReview.png" -mm="ram" --debug=1 -pl 32 -po 0 -ts 0 -tnl 10000 -bs=5000 --batch_size=128 --filters=256 -m="smcnn_semantic" --phase="repeat" -sc=False --class_n=$class_n --log_dir="../data/summaries/" --path="${dataset_path}" --im_h=$im_h --im_w=$im_w --band_n=2 --t_len=$t_len --id_first=1 -tof=False -nap=10000 -psv=True
 
 #python patches_store.py -mm="ram" --debug=1 -pl 32 -po 0 -ts 0 -tnl 10000 -bs=5000 --batch_size=128 --filters=256 -m="smcnn_semantic" --phase="repeat" -sc=False --class_n=12 --log_dir="../data/summaries/" --path="../cv_data/" --im_h=8492 --im_w=7995 --band_n=2 --t_len=7 --id_first=1 -tof=False -nap=10000 -psv=True
 

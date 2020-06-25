@@ -180,13 +180,21 @@ class Dataset(NetObject):
 
 		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
 		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
-
+		print("=============== UNIQUE LABELS ===========================")
+		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=4),return_counts=True))
+		deb.prints(np.unique(self.patches['test']['label'].argmax(axis=4),return_counts=True))
 		# get just 1 month (many 2 one)
-		date_id = 6 # daate is 7 counting from 1
+		#seq_len = 7
+		#date_id = 6 # daate is 7 counting from 1
+		date_id = 4 # daate is 5 counting from 1
+		
 		self.patches['train']['label']=self.patches['train']['label'][:,date_id,]
 		self.patches['test']['label']=self.patches['test']['label'][:,date_id,]
 		self.patches['train']['in']=self.patches['train']['in'][:,0:date_id+1,]
 		self.patches['test']['in']=self.patches['test']['in'][:,0:date_id+1,]
+		print("=============== UNIQUE LABELS ===========================")
+		deb.prints(np.unique(self.patches['train']['label'].argmax(axis=3),return_counts=True))
+		deb.prints(np.unique(self.patches['test']['label'].argmax(axis=3),return_counts=True))
 
 		deb.prints(len(self.patches_list['test']['label']))
 		deb.prints(len(self.patches_list['test']['ims']))
@@ -1441,6 +1449,39 @@ class NetModel(NetObject):
 
 			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=False,
 					padding="same"),merge_mode='concat')(e3)
+
+			d3 = transpose_layer(x,fs*4)
+			p3 = keras.layers.Lambda(lambda x: x[:,-1])(p3)
+			d3 = keras.layers.concatenate([d3, p3], axis=3)
+			d3=dilated_layer(d3,fs*4)
+			d2 = transpose_layer(d3,fs*2)
+			p2 = keras.layers.Lambda(lambda x: x[:,-1])(p2)
+			d2 = keras.layers.concatenate([d2, p2], axis=3)
+			d2=dilated_layer(d2,fs*2)
+			d1 = transpose_layer(d2,fs)
+			p1 = keras.layers.Lambda(lambda x: x[:,-1])(p1)
+			d1 = keras.layers.concatenate([d1, p1], axis=3)
+			out=dilated_layer(d1,fs)
+			out = Conv2D(self.class_n, (1, 1), activation=None,
+										padding='same')(out)
+			self.graph = Model(in_im, out)
+			print(self.graph.summary())
+		if self.model_type=='Unet4ConvLSTM':
+
+
+			#fs=32
+			fs=16
+
+			p1=time_distributed_dilated_layer(in_im,fs)			
+			p1=time_distributed_dilated_layer(p1,fs)
+			e1 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p1)
+			p2=time_distributed_dilated_layer(e1,fs*2)
+			e2 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p2)
+			p3=time_distributed_dilated_layer(e2,fs*4)
+			e3 = TimeDistributed(AveragePooling2D((2, 2), strides=(2, 2)))(p3)
+
+			x = ConvLSTM2D(256,3,return_sequences=False,
+					padding="same")(e3)
 
 			d3 = transpose_layer(x,fs*4)
 			p3 = keras.layers.Lambda(lambda x: x[:,-1])(p3)

@@ -80,7 +80,7 @@ def labels_predictions_filter_transform(label_test,predictions,class_n,
 		print("Predictions",predictions.shape)
 		print("Label_test",label_test.shape)
 	return label_test,predictions
-def metrics_get(label_test,predictions,only_basics=False,debug=1):
+def metrics_get(label_test,predictions,only_basics=False,debug=1, detailed_t=None):
 	if debug>0:
 		print(predictions.shape,predictions.dtype)
 		print(label_test.shape,label_test.dtype)
@@ -119,6 +119,9 @@ def metrics_get(label_test,predictions,only_basics=False,debug=1):
 
 			print(metrics['precision'])
 			print(metrics['recall'])
+	if detailed_t==6:
+			print(confusion_matrix_)
+
 	return metrics
 
 
@@ -161,7 +164,7 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 				debug=debug,small_classes_ignore=small_classes_ignore,
 				important_classes=None)
 			metrics = metrics_get(label_test_t, predictions_t,
-				only_basics=True, debug=debug)	
+				only_basics=True, debug=debug, detailed_t = t)	
 			metrics_t['f1_score'].append(metrics['f1_score'])
 			metrics_t['overall_acc'].append(metrics['overall_acc'])
 			metrics_t['average_acc'].append(metrics['average_acc'])
@@ -515,7 +518,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=7 # 4 for thesis and journal
+	exp_id=10 # 4 for thesis and journal
 
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -685,6 +688,14 @@ if dataset=='cv':
 			'prediction_BUnet4_Standalone_noconvlstm.npy'
 				
 		]]	
+	elif exp_id==10:
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_repeating1.npy',
+			'prediction_BUnet4ConvLSTM_repeating2.npy',
+			'prediction_BUnet4ConvLSTM_repeating4.npy',
+			'prediction_BUnet4ConvLSTM_repeating7.npy'				
+		]]	
+
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',

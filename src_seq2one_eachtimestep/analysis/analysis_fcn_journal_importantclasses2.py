@@ -128,9 +128,8 @@ path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/densenet/'
 prediction_path=path+'prediction.npy'
 
 #prediction_path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/cv/prediction_ConvLSTM_DenseNet_eyesight.npy'
-
-# =========seq2seq 
-def experiment_analyze(small_classes_ignore,dataset='cv',
+# ====== seq2one
+def experiment_analyze_seq2seq(small_classes_ignore,dataset='cv',
 		prediction_filename='prediction_DenseNetTimeDistributed_blockgoer.npy',
 		mode='each_date',debug=1):
 	path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/'+dataset+'/'
@@ -139,6 +138,62 @@ def experiment_analyze(small_classes_ignore,dataset='cv',
 	predictions=np.load(prediction_path, allow_pickle=True)
 	label_test=np.load(path+'labels.npy', allow_pickle=True)
 	if debug>0:
+
+		print(predictions.shape)
+		print(label_test.shape)
+	class_n=predictions.shape[-1]
+
+	if mode=='each_date':
+		metrics_t={'f1_score':[],'overall_acc':[],
+			'average_acc':[]}
+
+		# if dataset=='cv':
+		# 	important_classes=[]
+		# 	for date in range(14):
+		# 		if date<=7:
+		# 			date_important_classes=[0,6,8]
+		for t in range(label_test.shape[1]):
+			predictions_t = predictions[:,t,:,:,:]
+			label_test_t = label_test[:,t,:,:,:]
+
+			label_test_t,predictions_t = labels_predictions_filter_transform(
+				label_test_t, predictions_t, class_n=class_n,
+				debug=debug,small_classes_ignore=small_classes_ignore,
+				important_classes=None)
+			metrics = metrics_get(label_test_t, predictions_t,
+				only_basics=True, debug=debug)	
+			metrics_t['f1_score'].append(metrics['f1_score'])
+			metrics_t['overall_acc'].append(metrics['overall_acc'])
+			metrics_t['average_acc'].append(metrics['average_acc'])
+
+		print(metrics_t)
+		return metrics_t
+	elif mode=='global':
+		
+		label_test,predictions=labels_predictions_filter_transform(
+			label_test,predictions, class_n=class_n)
+
+		print(np.unique(predictions,return_counts=True))
+		print(np.unique(label_test,return_counts=True))
+
+		metrics=metrics_get(label_test,predictions)
+
+		return metrics
+
+# =========seq2seq 
+def experiment_analyze(small_classes_ignore,dataset='cv',
+		prediction_filename='prediction_DenseNetTimeDistributed_blockgoer.npy',
+		mode='each_date',debug=1):
+	path='/home/lvc/Jorg/igarss/convrnn_remote_sensing/results/seq2seq_ignorelabel/'+dataset+'/'
+
+	#t_step = 6 # counting from 0
+	t_step = 4 # counting from 0
+	
+	prediction_path=path+prediction_filename
+	predictions=np.load(prediction_path, allow_pickle=True)
+	label_test=np.load(path+'labels.npy', allow_pickle=True)[:,t_step]
+	if True:
+		print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEREEEEEEEEEEE")
 		print(predictions.shape)
 		print(label_test.shape)
 	class_n=predictions.shape[-1]
@@ -451,8 +506,8 @@ def experiments_plot(metrics,experiment_list,dataset,
 dataset='cv'
 load_metrics=False
 small_classes_ignore=False
-#mode='global'
-mode='each_date'
+mode='global'
+#mode='each_date'
 if dataset=='cv':
 	experiment_groups=[[
 		'prediction_ConvLSTM_seq2seq_batch16_full.npy',
@@ -515,7 +570,7 @@ if dataset=='cv':
 
 		'prediction_FCN_ConvLSTM_seq2seq_bi_skip_lauras2.npy',
 		'prediction_DenseNetTimeDistributed_128x2_redoingz2.npy']]
-	exp_id=7 # 4 for thesis and journal
+	exp_id=10 # 4 for thesis and journal
 
 	if exp_id==1:
 		experiment_groups=[[#'prediction_deeplabv3plus_v3plus2.npy',
@@ -614,77 +669,20 @@ if dataset=='cv':
 
 
 
-	elif exp_id==5:
+	elif exp_id==10:
 		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
-			'prediction_BAtrousGAPConvLSTM_raulapproved.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating3.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating4.npy',
-			'prediction_BAtrousGAPConvLSTM_repeating6.npy',
-			]]
-		experiment_groups=[[
-			'prediction_DenseNetTimeDistributed_128x2_redoing3.npy',
-			'prediction_DenseNetTimeDistributed_128x2_3blocks_3blocks_check.npy'
-			]]
-		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
-			#'prediction_BUnet5ConvLSTM_unet_one_conv_in.npy',
-			'prediction_BUnet4ConvLSTM_attention_2020.npy',
-			
-			]]
-
-		#experiment_groups=[[
-		#	'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-		#	'prediction_ConvLSTM_seq2seq_bi_redoing3.npy'
-		#	]]
-	elif exp_id==6:
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-			#'prediction_fcn_bconvlstm.npy',
-			'prediction_bconvlstm_wholeinput.npy',
-			'prediction_unet_convlstm_temouri2.npy',
-			'prediction_BUnet4ConvLSTM_repeating1.npy'
-			]]
-	elif exp_id==7:
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_2020_1.npy',
-			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_2020_2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_attention_attention2020.npy'
-			
-		]]
-		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating1.npy',
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4ConvLSTM_repeating4.npy',
-			'prediction_BUnet4ConvLSTM_SelfAttention_attention_2020.npy',
-			#'prediction_BUnet4ConvLSTM_attention_2020.npy',
-			'prediction_Unet4ConvLSTM_SelfAttention_attention_2020.npy',
-				
-		]]
-	elif exp_id==8:
-		experiment_groups=[[
-			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
-			'prediction_ConvLSTM_seq2seq_bi_redoing3.npy',
-			'prediction_ConvLSTM_seq2seq_bi_SelfAttention_selfattention.npy',
-			'prediction_ConvLSTM_seq2seq_bi_SelfAttention_selfattention2.npy',
-
-				
-		]]			
-	elif exp_id==9:
-		experiment_groups=[[
-			'prediction_BUnet4ConvLSTM_repeating2.npy',
-			'prediction_BUnet4_Standalone_noconvlstm.npy'
+			'prediction_BUnet4ConvLSTM_first7images.npy',
+			'prediction_BUnet4ConvLSTM_first7images2.npy',
+			'prediction_BUnet4ConvLSTM_first7images3.npy'
 				
 		]]	
+		experiment_groups=[[
+			'prediction_BUnet4ConvLSTM_first5images.npy',
+			'prediction_BUnet4ConvLSTM_first5images2.npy',
+			'prediction_Unet4ConvLSTM_first5images3.npy',
+			
+		]]	
+		
 ##		'prediction_DenseNetTimeDistributed_128x2_redoing.npy']
 		##'prediction_ConvLSTM_seq2seq_loneish.npy',
 		##'prediction_ConvLSTM_seq2seq_bi_loneish.npy',

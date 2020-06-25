@@ -2,7 +2,7 @@
 id=$1
 model=$2
 dataset=$3 # could be cv or lem
-t_step=$4
+
 if [ "$dataset" == "cv_seq1" ]
 then
 	filename="campo_verde"
@@ -17,8 +17,8 @@ then
 	results_path='../results/seq2seq_ignorelabel/cv/'
 	summary_save_path='../results/seq2seq_ignorelabel/summary/cv/'
 	dataset_path="../../../deep_learning/LSTM-Final-Project/cv_data/"
-	sequence_len=$t_step
-	class_n=12
+	sequence_len=14
+	class_n=10 #11+1bckdn-2beans and turfgrass
 
 else
 	filename="lm"

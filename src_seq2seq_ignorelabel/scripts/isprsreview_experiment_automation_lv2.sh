@@ -19,10 +19,6 @@ KERAS_BACKEND=tensorflow
 # . experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
 
 
-
-id='dummy'
-
-
 dataset='cv'
 #. patches_extract.sh $dataset
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
@@ -37,9 +33,14 @@ dataset='cv'
 #. experiment_automation.sh $id 'BUnet4_Standalone' $dataset  # gonna test balancing after replication
 
 # ======================== REGULAR BUNET WITH ADAM
-id='adam'
+#id='adam'
 
-. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+#. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+
+id='isprsreviewmask'
+. isprsreview_patches_extract.sh $dataset
+. isprsreview_experiment_automation.sh $id 'Unet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+
 
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication
 
