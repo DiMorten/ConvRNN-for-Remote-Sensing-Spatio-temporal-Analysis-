@@ -6,15 +6,15 @@ dataset='lm'
 
 
 # ==== EXTRACT PATCHES
-#. patches_extract.sh $dataset
+. patches_extract.sh $dataset
 # ===== USE MODEL
 
-. experiment_automation.sh $id 'DenseNetTimeDistributed' $dataset 
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq' $dataset
-. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi_60x2' $dataset
-. experiment_automation.sh $id 'FCN_ConvLSTM_seq2seq_bi_skip' $dataset
 
 
 
+. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+##. experiment_automation.sh $id 'ConvLSTM_seq2seq_128' $dataset  # Unet5 uses 1 conv. in
+#. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset
+#. experiment_automation.sh $id 'BAtrousGAPConvLSTM' $dataset  # gonna test balancing after replication
+#. experiment_automation.sh $id 'DenseNetTimeDistributed_128x2' $dataset  # Unet5 uses 1 conv. in
 

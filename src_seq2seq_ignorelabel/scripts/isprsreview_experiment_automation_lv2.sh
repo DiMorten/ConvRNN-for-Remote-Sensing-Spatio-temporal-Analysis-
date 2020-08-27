@@ -37,9 +37,10 @@ dataset='cv'
 
 #. experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
 
-id='isprsreviewmask'
+id='afterthought'
 . isprsreview_patches_extract.sh $dataset
-. isprsreview_experiment_automation.sh $id 'Unet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+#. isprsreview_experiment_automation.sh $id 'BUnet4ConvLSTM' $dataset  # Unet5 uses 1 conv. in
+. isprsreview_experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # Unet5 uses 1 conv. in
 
 
 #. experiment_automation.sh $id 'ConvLSTM_seq2seq_bi' $dataset  # gonna test balancing after replication

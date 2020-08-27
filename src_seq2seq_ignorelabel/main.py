@@ -35,7 +35,7 @@ from keras.regularizers import l1,l2
 import time
 import pickle
 from keras_self_attention import SeqSelfAttention
-
+import pdb
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-tl', '--t_len', dest='t_len',
 					type=int, default=7, help='t len')
@@ -179,16 +179,30 @@ class Dataset(NetObject):
 
 		self.patches['train']['label']=self.patches['train']['label'].astype(np.int8)
 		self.patches['test']['label']=self.patches['test']['label'].astype(np.int8)
-
+		
 		deb.prints(len(self.patches_list['test']['label']))
 		deb.prints(len(self.patches_list['test']['ims']))
 		deb.prints(self.patches['train']['in'].shape)
 		deb.prints(self.patches['train']['in'].dtype)
 		
 		deb.prints(self.patches['train']['label'].shape)
+		deb.prints(self.patches['test']['label'].shape)
+		unique,count = np.unique(self.patches['test']['label'],return_counts=True)
+		print_pixel_count = True
+		if print_pixel_count == True:
+			for t_step in range(self.patches['test']['label'].shape[1]):
+				deb.prints(t_step)
+				deb.prints(np.unique(self.patches['train']['label'].argmax(axis=-1)[:,t_step],return_counts=True))
+			print("Test label unique: ",unique,count)
+
+			for t_step in range(self.patches['test']['label'].shape[1]):
+				deb.prints(t_step)
+				deb.prints(np.unique(self.patches['test']['label'].argmax(axis=-1)[:,t_step],return_counts=True))
+			#pdb.set_trace()
 		
 		self.patches['train']['n']=self.patches['train']['in'].shape[0]
 		self.patches['train']['idx']=range(self.patches['train']['n'])
+		np.save('labels_beginning.npy',self.patches['test']['label'])
 
 	def batch_label_to_one_hot(self,im):
 		im_one_hot=np.zeros((im.shape[0],im.shape[1],im.shape[2],im.shape[3],self.class_n))
@@ -1028,8 +1042,17 @@ class NetModel(NetObject):
 			x = Activation('relu')(x)
 			self.graph = Model(in_im, x)
 			print(self.graph.summary())
+		elif self.model_type=='ConvLSTM_seq2seq_128':
+			x = ConvLSTM2D(128,3,return_sequences=True,padding="same")(in_im)
+			x = TimeDistributed(Conv2D(self.class_n, (1, 1), activation=None,
+						 padding='same'))(x)
+			x = BatchNormalization(gamma_regularizer=l2(weight_decay),
+							   beta_regularizer=l2(weight_decay))(x)
+			x = Activation('relu')(x)
+			self.graph = Model(in_im, x)
+			print(self.graph.summary())
 		elif self.model_type=='ConvLSTM_seq2seq_bi':
-			x = Bidirectional(ConvLSTM2D(256,3,return_sequences=True,
+			x = Bidirectional(ConvLSTM2D(128,3,return_sequences=True,
 				padding="same"))(in_im)
 #			out = TimeDistributed(Conv2D(self.class_n, (1, 1), activation='softmax',
 #						 padding='same'))(x)
@@ -2341,7 +2364,7 @@ if __name__ == '__main__':
 	test_label_unique,test_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
 	deb.prints(test_label_unique)
 	deb.prints(test_label_count)
-	train_label_unique,train_label_count=np.unique(data.patches['test']['label'].argmax(axis=4),return_counts=True)
+	train_label_unique,train_label_count=np.unique(data.patches['train']['label'].argmax(axis=4),return_counts=True)
 	deb.prints(train_label_unique)
 	deb.prints(train_label_count)
 	data.label_unique=test_label_unique.copy()
