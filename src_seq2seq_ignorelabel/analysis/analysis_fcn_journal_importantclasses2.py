@@ -863,6 +863,34 @@ elif dataset=='lm':
 			'prediction_BUnet4ConvLSTM_repeating4.npy',
 			'prediction_BUnet4ConvLSTM_lmish_sar_newscript2.npy',
 			'prediction_BUnet4ConvLSTM_lmish.npy']]
+
+		experiment_groups=[[
+			'prediction_uconvlstm.npy',
+			'prediction_ConvLSTM_seq2seq_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_redoing.npy',
+			'prediction_ConvLSTM_seq2seq_redoingz.npy',
+			'prediction_ConvLSTM_seq2seq_redoingz2.npy'
+
+			 #double filters
+		]]		
+
+		experiment_groups=[[
+			'prediction_bconvlstm_lem_ok.npy',
+			'prediction_bconvlstm_lem_ok2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_batch16_full.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoing.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+			'prediction_ConvLSTM_seq2seq_bi_redoingz2.npy',
+			 #double filters
+		]]		
+	elif exp_id==9: #Check against matlab f1 results
+		experiment_groups=[[
+			'prediction_uconvlstm.npy',
+			'prediction_bconvlstm_lem_ok.npy',
+			'prediction_BUnet4ConvLSTM_lmish_sar_newscript2.npy', #double filters
+			'prediction_batrousconvlstm_notok.npy'
+		]]	
 if load_metrics==False:
 	experiment_metrics=experiment_groups_analyze(dataset,experiment_groups,
 		mode=mode,exp_id=exp_id,small_classes_ignore=small_classes_ignore)

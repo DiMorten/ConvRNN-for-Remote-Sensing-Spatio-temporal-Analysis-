@@ -2225,7 +2225,7 @@ class NetModel(NetObject):
 			#==========================TEST LOOP================================================#
 			if self.early_stop['signal']==True:
 				self.graph.load_weights('weights_best.h5')
-			test_loop_each_epoch=False
+			test_loop_each_epoch=True
 			if test_loop_each_epoch==True or self.early_stop['signal']==True:
 				data.patches['test']['prediction']=np.zeros_like(data.patches['test']['label'][:,:,:,:,:-1])
 				self.batch_test_stats=False
