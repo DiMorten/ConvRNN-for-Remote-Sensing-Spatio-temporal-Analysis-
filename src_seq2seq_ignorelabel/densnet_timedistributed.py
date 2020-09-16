@@ -159,14 +159,14 @@ def DenseNetFCNTimeDistributed(input_shape, nb_dense_block=5, growth_rate=16, nb
 
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
-    #if input_tensor is not None:
-    #    inputs = get_source_inputs(input_tensor)
-    #else:
-    #    inputs = img_input
+    if input_tensor is not None:
+        inputs = get_source_inputs(input_tensor)
+    else:
+        inputs = img_input
     ## Create model.
-    #model = Model(inputs, x, name='fcn-densenet')
+    model = Model(inputs, x, name='fcn-densenet')
     #
-    return x
+    return model
 
 
 def __conv_block(ip, nb_filter, bottleneck=False, dropout_rate=None, weight_decay=1E-4,
@@ -412,7 +412,7 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
     # The last dense_block does not have a transition_down_block
     # return the concatenated feature maps without the concatenation of the input
 
-    if attention==True:
+    if True:
         x = Bidirectional(ConvLSTM2D(recurrent_filters, (3, 3), kernel_initializer="he_uniform", padding="same", use_bias=False,
                               kernel_regularizer=l2(weight_decay),
                               return_sequences=True))(x)
@@ -477,7 +477,7 @@ def __create_fcn_dense_net(nb_classes, img_input, include_top, nb_dense_block=5,
     return x
 
 if __name__ == '__main__':
-    model = DenseNetFCNTimeDistributed((32, 32, 28), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
+    model = DenseNetFCNTimeDistributed((14,32, 32, 2), nb_dense_block=2, growth_rate=16, dropout_rate=0.2,
                         nb_layers_per_block=2, upsampling_type='deconv', classes=12, 
                         activation='softmax', batchsize=32)
     model.summary()

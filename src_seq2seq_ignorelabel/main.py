@@ -29,7 +29,7 @@ from metrics import fmeasure,categorical_accuracy
 import deb
 from keras_weighted_categorical_crossentropy import weighted_categorical_crossentropy, sparse_accuracy_ignoring_last_label, weighted_categorical_crossentropy_ignoring_last_label
 from keras.models import load_model
-from keras.layers import ConvLSTM2D, ConvGRU2D, UpSampling2D, multiply
+from keras.layers import ConvLSTM2D, UpSampling2D, multiply
 from keras.utils.vis_utils import plot_model
 from keras.regularizers import l1,l2
 import time
